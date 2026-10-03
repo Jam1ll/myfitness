@@ -1,0 +1,52 @@
+﻿name: MyFitness Microservices CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  unit-tests:
+    name: Build & Test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - discovery-server
+          - api-gateway
+          - auth-service
+          - catalog-service
+          - workout-service
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile and Run JUnit 5 + Mockito Tests
+        working-directory: ./${{ matrix.service }}
+        run: mvn clean test -B
+
+  docker-build:
+    name: Validate Docker Multi-Stage Builds
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Compose Images
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: ci_test_password
+          JWT_SECRET_KEY: ci_test_secret_key_that_is_at_least_32_bytes_long
+          GOOGLE_CLIENT_ID: ci_test_google_client_id
+        run: docker compose build

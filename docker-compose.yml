@@ -1,0 +1,101 @@
+services:
+  # 1. POSTGRESQL DATABASE (Creates the 3 DBs automatically using init.sql)
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: myfitness-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. EUREKA DISCOVERY SERVER
+  discovery-server:
+    build: ./discovery-server
+    container_name: myfitness-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_INSTANCE_HOSTNAME=discovery-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. API GATEWAY
+  api-gateway:
+    build: ./api-gateway
+    container_name: myfitness-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+
+  # 4. AUTH SERVICE
+  auth-service:
+    build: ./auth-service
+    container_name: myfitness-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/myfitness_auth
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  # 5. CATALOG SERVICE
+  catalog-service:
+    build: ./catalog-service
+    container_name: myfitness-catalog
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/myfitness_catalog
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  # 6. WORKOUT SERVICE
+  workout-service:
+    build: ./workout-service
+    container_name: myfitness-workout
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/myfitness_workout
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+volumes:
+  postgres_data:
