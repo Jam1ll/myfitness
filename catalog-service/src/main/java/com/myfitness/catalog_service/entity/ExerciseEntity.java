@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -27,4 +30,16 @@ public class ExerciseEntity {
 
     @Column(nullable = false)
     private MuscleGroup muscleGroup;
+
+    @Column(nullable = false)
+    private boolean isPrivate;
+
+    @Column(nullable = false)
+    private String userEmail;
+
+    @Column(nullable = false)
+    private String createdBy;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }

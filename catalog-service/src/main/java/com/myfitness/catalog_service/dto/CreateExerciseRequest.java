@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
+
 public record CreateExerciseRequest(
 
         @NotBlank(message = "Exercise's name can not be blank")
@@ -16,5 +18,7 @@ public record CreateExerciseRequest(
         String description,
 
         @NotNull(message = "Exercise's muscle group can not be null")
-        MuscleGroup muscleGroup) {
+        MuscleGroup muscleGroup,
+
+        boolean isPrivate) {
 }

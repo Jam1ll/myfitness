@@ -49,7 +49,7 @@ services:
     build: ./auth-service
     container_name: myfitness-auth
     ports:
-      - "8081:8081"
+      - "8084:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/myfitness_auth
       - DB_USER=${DB_USER}

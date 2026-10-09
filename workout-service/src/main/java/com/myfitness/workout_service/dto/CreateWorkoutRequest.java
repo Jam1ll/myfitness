@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,5 +15,7 @@ public record CreateWorkoutRequest(
         String name,
 
         @NotEmpty(message = "There should be at least 1 valid exercise")
-        List<UUID> exerciseIds) {
+        List<UUID> exerciseIds,
+
+        boolean isPrivate) {
 }

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +30,7 @@ public class WorkoutService {
 
     //CREATE (PROTECTED WITH CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "createWorkoutFallback")
-    public WorkoutResponse createWorkout(String userEmail, CreateWorkoutRequest workoutRequest) {
+    public WorkoutResponse createWorkout(String userEmail, String userName, CreateWorkoutRequest workoutRequest) {
         //batching validation
         boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
         if (!allValid) throw new IllegalArgumentException
@@ -40,17 +41,19 @@ public class WorkoutService {
                 .userEmail(userEmail)
                 .name(workoutRequest.name())
                 .exerciseIds(workoutRequest.exerciseIds())
+                .isPrivate(workoutRequest.isPrivate())
+                .createdBy(userName)
                 .build();
 
         WorkoutEntity entity = workoutRepository.save(workoutEntity);
 
-        return workoutMapper.toRecord(entity);
+        return workoutMapper.toRecord(entity, userEmail);
     }
 
     //
     //CREATE FALLBACK
     //
-    public WorkoutResponse createWorkoutFallback(String userEmail, CreateWorkoutRequest workoutRequest, Throwable t) {
+    public WorkoutResponse createWorkoutFallback(String userEmail, String userName, CreateWorkoutRequest workoutRequest, Throwable t) {
         log.error("Circuit Breaker triggered at createWorkout. Cause: {}", t.getMessage());
 
         //throw a 503 Service Unavailable without collapsing the server
@@ -60,9 +63,9 @@ public class WorkoutService {
 
     //UPDATE (PROTECTED WITH CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "updateWorkoutFallback")
-    public WorkoutResponse updateWorkout(UUID id, UpdateWorkoutRequest workoutRequest) {
+    public WorkoutResponse updateWorkout(String userEmail, UUID id, UpdateWorkoutRequest workoutRequest) {
         //search routine
-        WorkoutEntity foundEntity = workoutRepository.findById(id)
+        WorkoutEntity foundEntity = workoutRepository.findWorkoutByIdAndUserEmail(id, userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout with id '" + id + "' not found"));
 
         //batching validation
@@ -77,7 +80,7 @@ public class WorkoutService {
         //save changes
         WorkoutEntity updatedWorkout = workoutRepository.save(foundEntity);
 
-        return workoutMapper.toRecord(updatedWorkout);
+        return workoutMapper.toRecord(updatedWorkout, foundEntity.getUserEmail());
     }
 
     //
@@ -93,8 +96,8 @@ public class WorkoutService {
 
     //DELETE
     @Transactional
-    public boolean deleteWorkout(UUID id) {
-        int rowsAffected = workoutRepository.deleteWorkoutById(id);
+    public boolean deleteWorkout(String userEmail, UUID id) {
+        int rowsAffected = workoutRepository.deleteWorkoutByIdAndUserEmail(userEmail, id);
         if (rowsAffected == 0)
             throw new ResourceNotFoundException("Workout with id '" + id + "' not found");
         return rowsAffected > 0;
@@ -102,7 +105,7 @@ public class WorkoutService {
 
     //GET ALL BY USER'S EMAIL
     public Page<WorkoutResponse> getAllWorkoutsByUserEmail(String userEmail, Pageable pageable) {
-        return workoutRepository.findAllWorkoutsByUserEmail(userEmail, pageable).map(workoutMapper::toRecord);
+        return workoutRepository.findAllWorkoutsByUserEmail(userEmail, pageable).map(entity -> workoutMapper.toRecord(entity, userEmail));
     }
 
     //GET BY ID ENRICHED (CIRCUIT BREAKER)
@@ -117,10 +120,13 @@ public class WorkoutService {
 
         return new WorkoutDetailResponse(
                 foundEntity.getId(),
-                foundEntity.getUserEmail(),
                 foundEntity.getName(),
-                exercises
-        );
+                exercises,
+                foundEntity.isPrivate(),
+                foundEntity.getCreatedBy(),
+                foundEntity.getCreatedAt(),
+                true //just true because we already checked is anti-IDOR
+            );
     }
 
     //
@@ -138,14 +144,20 @@ public class WorkoutService {
                         exerciseId,
                         "Details not available",
                         "Catalog service is under maintenance",
-                        "UNKNOWN"
+                        "UNKNOWN",
+                        false,
+                        "UNKNOWN",
+                        LocalDateTime.now()
                 )).toList();
 
         return new WorkoutDetailResponse(
                 foundEntity.getId(),
-                foundEntity.getUserEmail(),
                 foundEntity.getName(),
-                fallbackExercises
+                fallbackExercises,
+                foundEntity.isPrivate(),
+                foundEntity.getCreatedBy(),
+                foundEntity.getCreatedAt(),
+                true //just true because we already checked is anti-IDOR
         );
     }
 }

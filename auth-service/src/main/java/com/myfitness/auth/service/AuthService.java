@@ -89,6 +89,7 @@ public class AuthService {
                 .claim("email", user.getEmail())
                 .claim("uid", user.getId())
                 .claim("roles", user.getRoles())
+                .claim("name", user.getName())
                 .setIssuer(jwtIssuer)
                 .setAudience(jwtAudience)
                 .setIssuedAt(now)

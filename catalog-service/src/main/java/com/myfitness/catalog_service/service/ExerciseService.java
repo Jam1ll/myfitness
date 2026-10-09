@@ -24,9 +24,11 @@ public class ExerciseService {
     private final ExerciseMapper exerciseMapper;
 
     //CREATE
-    public ExerciseResponse createExercise(CreateExerciseRequest request) {
-        ExerciseEntity entity = exerciseRepository.save(exerciseMapper.toEntity(request));
-        return exerciseMapper.toRecord(entity);
+    public ExerciseResponse createExercise(String userEmail, String userName, CreateExerciseRequest request) {
+        ExerciseEntity entity = exerciseMapper.toEntity(request);
+        entity.setUserEmail(userEmail);
+        entity.setCreatedBy(userName);
+        return exerciseMapper.toRecord(exerciseRepository.save(entity), userEmail);
     }
 
     //UPDATE
@@ -38,7 +40,8 @@ public class ExerciseService {
 
         ExerciseEntity updatedEntity = exerciseRepository.save(foundEntity);
 
-        return exerciseMapper.toRecord(updatedEntity);
+        // Pasamos el email del dueño original para la respuesta
+        return exerciseMapper.toRecord(updatedEntity, foundEntity.getUserEmail());
     }
 
     //DELETE
@@ -61,34 +64,34 @@ public class ExerciseService {
     }
 
     //GET ALL
-    public Page<ExerciseResponse> getAllExercises(Pageable pageable) {
-        return exerciseRepository.findAll(pageable).map(exerciseMapper::toRecord);
+    public Page<ExerciseResponse> getAllExercises(String userEmail, Pageable pageable) {
+        return exerciseRepository.findAll(pageable).map(entity -> exerciseMapper.toRecord(entity, userEmail));
     }
 
     //GET BY MUSCLE GROUP
-    public Page<ExerciseResponse> getAllExercisesByMuscleGroup(MuscleGroup muscleGroup, Pageable pageable) {
-        return exerciseRepository.findByMuscleGroup(muscleGroup, pageable).map(exerciseMapper::toRecord);
+    public Page<ExerciseResponse> getAllExercisesByMuscleGroup(MuscleGroup muscleGroup, String userEmail, Pageable pageable) {
+        return exerciseRepository.findByMuscleGroup(muscleGroup, pageable).map(entity -> exerciseMapper.toRecord(entity, userEmail));
     }
 
     //GET BY ID
-    public ExerciseResponse getExerciseById(UUID id) {
+    public ExerciseResponse getExerciseById(UUID id, String userEmail) {
         return exerciseRepository.findById(id)
-                .map(exerciseMapper::toRecord)
+                .map(entity -> exerciseMapper.toRecord(entity, userEmail))
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise with id '" + id + "' not found"));
     }
 
     //GET BY NAME
-    public ExerciseResponse getExerciseByName(String name) {
+    public ExerciseResponse getExerciseByName(String name, String userEmail) {
         return exerciseRepository.findByName(name)
-                .map(exerciseMapper::toRecord)
+                .map(entity -> exerciseMapper.toRecord(entity, userEmail))
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise with name '" + name + "' not found"));
     }
 
     //GET ALL BY IDS (BATCHING)
-    public List<ExerciseResponse> getExercisesByIds(List<UUID> ids){
+    public List<ExerciseResponse> getExercisesByIds(List<UUID> ids, String userEmail){
         return exerciseRepository.findAllById(ids)
                 .stream()
-                .map(exerciseMapper::toRecord)
+                .map(entity -> exerciseMapper.toRecord(entity, userEmail))
                 .toList();
     }
 }

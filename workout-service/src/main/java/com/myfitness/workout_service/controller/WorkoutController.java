@@ -43,8 +43,9 @@ public class WorkoutController {
     public WorkoutResponse createWorkout(
             @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
             @RequestHeader("X-User-Email") String userEmail,
+            @RequestHeader("X-User-Name") String userName,
             @Valid @RequestBody CreateWorkoutRequest request) {
-        return workoutService.createWorkout(userEmail, request);
+        return workoutService.createWorkout(userEmail, userName, request);
     }
 
     // UPDATE -> PUT /api/v1/workouts/{id}
@@ -61,10 +62,11 @@ public class WorkoutController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public WorkoutResponse updateWorkout(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Unique identifier (UUID) of the workout to update", required = true)
             @PathVariable UUID id,
             @Valid @RequestBody UpdateWorkoutRequest request) {
-        return workoutService.updateWorkout(id, request);
+        return workoutService.updateWorkout(userEmail, id, request);
     }
 
     // DELETE -> DELETE /api/v1/workouts/{id}
@@ -79,9 +81,10 @@ public class WorkoutController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public boolean deleteWorkout(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Unique identifier (UUID) of the workout to delete", required = true)
             @PathVariable UUID id) {
-        return workoutService.deleteWorkout(id);
+        return workoutService.deleteWorkout(userEmail, id);
     }
 
     // GET BY USER'S EMAIL -> GET /api/v1/workouts

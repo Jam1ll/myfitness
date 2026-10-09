@@ -18,8 +18,8 @@ public interface WorkoutRepository extends JpaRepository<WorkoutEntity, UUID> {
     Page<WorkoutEntity> findAllWorkoutsByUserEmail(String email, Pageable pageable);
 
     @Modifying
-    @Query("DELETE FROM WorkoutEntity w WHERE w.id = :id")
-    int deleteWorkoutById(@Param("id") UUID id);
+    @Query("DELETE FROM WorkoutEntity w WHERE w.id = :id AND w.userEmail = :userEmail")
+    int deleteWorkoutByIdAndUserEmail(@Param("userEmail") String userEmail, @Param("id") UUID id);
 
     //anti-IDOR vulnerability check
     Optional<WorkoutEntity> findWorkoutByIdAndUserEmail(UUID id, String userEmail);

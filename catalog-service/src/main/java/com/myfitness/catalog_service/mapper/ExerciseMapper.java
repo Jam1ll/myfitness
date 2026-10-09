@@ -5,12 +5,14 @@ import com.myfitness.catalog_service.dto.ExerciseResponse;
 import com.myfitness.catalog_service.dto.UpdateExerciseRequest;
 import com.myfitness.catalog_service.entity.ExerciseEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface ExerciseMapper {
 
-    ExerciseResponse toRecord(ExerciseEntity entity);
+    @Mapping(target = "isOwner", expression = "java(entity.getUserEmail().equals(userEmail))")
+    ExerciseResponse toRecord(ExerciseEntity entity, String userEmail);
 
     ExerciseEntity toEntity(CreateExerciseRequest record);
 

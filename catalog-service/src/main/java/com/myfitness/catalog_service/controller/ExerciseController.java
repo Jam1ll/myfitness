@@ -40,8 +40,10 @@ public class ExerciseController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ExerciseResponse createExercise(@Valid @RequestBody CreateExerciseRequest request) {
-        return exerciseService.createExercise(request);
+    public ExerciseResponse createExercise(@RequestHeader("X-User-Email") String userEmail,
+                                           @RequestHeader("X-User-Name") String userName,
+                                           @Valid @RequestBody CreateExerciseRequest request) {
+        return exerciseService.createExercise(userEmail,userName, request);
     }
 
     // UPDATE -> PUT /api/v1/exercises/{id}
@@ -109,8 +111,9 @@ public class ExerciseController {
     })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<ExerciseResponse> getAllExercises(@ParameterObject Pageable pageable) {
-        return exerciseService.getAllExercises(pageable);
+    public Page<ExerciseResponse> getAllExercises(@RequestHeader("X-User-Email") String userEmail,
+                                                  @ParameterObject Pageable pageable) {
+        return exerciseService.getAllExercises(userEmail, pageable);
     }
 
     // GET BY ID -> GET /api/v1/exercises/{id}
@@ -125,9 +128,10 @@ public class ExerciseController {
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ExerciseResponse getExerciseById(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Unique identifier (UUID) of the exercise", required = true)
             @PathVariable UUID id) {
-        return exerciseService.getExerciseById(id);
+        return exerciseService.getExerciseById(id, userEmail);
     }
 
     // GET BY NAME -> GET /api/v1/exercises/search?name=...
@@ -142,9 +146,10 @@ public class ExerciseController {
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
     public ExerciseResponse getExerciseByName(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Exact or partial name of the exercise to search", required = true)
             @RequestParam String name) {
-        return exerciseService.getExerciseByName(name);
+        return exerciseService.getExerciseByName(userEmail, name);
     }
 
     // GET BY MUSCLE GROUP -> GET /api/v1/exercises/muscle-group/{muscleGroup}
@@ -159,10 +164,11 @@ public class ExerciseController {
     @GetMapping("/muscle-group/{muscleGroup}")
     @ResponseStatus(HttpStatus.OK)
     public Page<ExerciseResponse> getAllExercisesByMuscleGroup(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Target muscle group enum", required = true)
             @PathVariable MuscleGroup muscleGroup,
             @ParameterObject Pageable pageable) {
-        return exerciseService.getAllExercisesByMuscleGroup(muscleGroup, pageable);
+        return exerciseService.getAllExercisesByMuscleGroup(muscleGroup, userEmail, pageable);
     }
 
     // GET ALL BY IDS (BATCHING) -> POST /api/v1/exercises/batch
@@ -176,8 +182,9 @@ public class ExerciseController {
     @PostMapping("/batch")
     @ResponseStatus(HttpStatus.OK)
     public List<ExerciseResponse> getExercisesByIds(
+            @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "List of exercise UUIDs to fetch", required = true)
             @RequestBody List<UUID> ids) {
-        return exerciseService.getExercisesByIds(ids);
+        return exerciseService.getExercisesByIds(ids, userEmail);
     }
 }

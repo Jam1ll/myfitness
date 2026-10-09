@@ -30,6 +30,15 @@ public class JwtUtil {
         return claims.getSubject();
     }
 
+    public String extractName(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSignKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("name", String.class);
+    }
+
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(jwtKey.getBytes());
     }
