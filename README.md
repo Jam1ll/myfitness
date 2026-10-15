@@ -54,7 +54,7 @@ This project is designed to run on a local Kubernetes cluster (e.g., Docker Desk
 # Setup database storage
 kubectl apply -f k8s/postgres-pvc.yaml
 kubectl apply -f k8s/postgres-deployment.yaml
-
+```
 **2. Configure Secrets**
 
 Apply your local secrets to secure the database and JWT generation:
