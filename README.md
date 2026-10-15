@@ -63,6 +63,7 @@ Apply your local secrets to secure the database and JWT generation:
 kubectl create secret generic app-secrets \
   --from-literal=SPRING_DATASOURCE_PASSWORD=your_password \
   --from-literal=JWT_SECRET_KEY=your_secure_jwt_key
+```
 
 **3. Deploy Microservices**
 
@@ -74,6 +75,7 @@ kubectl apply -f k8s/auth-service.yaml
 kubectl apply -f k8s/catalog-service.yaml
 kubectl apply -f k8s/workout-service.yaml
 kubectl apply -f k8s/api-gateway.yaml
+```
 
 **4. Access the API**
 
@@ -81,7 +83,7 @@ To bypass local NodePort/IPv6 routing complexities and establish a clean connect
 
 ```bash
 kubectl port-forward deployment/api-gateway 8080:8080
-
+```
 The API is now accessible at ⁠http://localhost:8080/api/v1/...⁠
 
 
