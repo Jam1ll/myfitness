@@ -64,8 +64,16 @@ public class ExerciseService {
     }
 
     //GET ALL
-    public Page<ExerciseResponse> getAllExercises(String userEmail, Pageable pageable) {
-        return exerciseRepository.findAll(pageable).map(entity -> exerciseMapper.toRecord(entity, userEmail));
+    public Page<ExerciseResponse> getAllAccessibleExercises(String userEmail, String search, boolean mineOnly, Pageable pageable) {
+        Page<ExerciseEntity> entities;
+
+        if (mineOnly) {
+            entities = exerciseRepository.findUserExercisesWithSearch(userEmail, search, pageable);
+        } else {
+            entities = exerciseRepository.findAccessibleExercisesWithSearch(userEmail, search, pageable);
+        }
+
+        return entities.map(entity -> exerciseMapper.toRecord(entity, userEmail));
     }
 
     //GET BY MUSCLE GROUP

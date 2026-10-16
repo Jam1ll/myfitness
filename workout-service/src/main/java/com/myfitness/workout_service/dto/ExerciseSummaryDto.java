@@ -8,7 +8,7 @@ public record ExerciseSummaryDto(
         String name,
         String description,
         String muscleGroup,
-        boolean isPrivate,
+        boolean workoutPrivate,
         String createdBy,
         LocalDateTime createdAt) {
 }

@@ -8,5 +8,5 @@ public record UpdateExerciseRequest(
         String name,
         String description,
         MuscleGroup muscleGroup,
-        boolean isPrivate) {
+        boolean exercisePrivate) {
 }

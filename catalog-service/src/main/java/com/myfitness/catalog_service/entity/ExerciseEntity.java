@@ -32,7 +32,7 @@ public class ExerciseEntity {
     private MuscleGroup muscleGroup;
 
     @Column(nullable = false)
-    private boolean isPrivate;
+    private boolean exercisePrivate;
 
     @Column(nullable = false)
     private String userEmail;

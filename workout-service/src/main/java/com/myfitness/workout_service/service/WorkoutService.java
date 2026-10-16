@@ -41,7 +41,7 @@ public class WorkoutService {
                 .userEmail(userEmail)
                 .name(workoutRequest.name())
                 .exerciseIds(workoutRequest.exerciseIds())
-                .isPrivate(workoutRequest.isPrivate())
+                .workoutPrivate(workoutRequest.workoutPrivate())
                 .createdBy(userName)
                 .build();
 
@@ -122,7 +122,7 @@ public class WorkoutService {
                 foundEntity.getId(),
                 foundEntity.getName(),
                 exercises,
-                foundEntity.isPrivate(),
+                foundEntity.workoutPrivate(),
                 foundEntity.getCreatedBy(),
                 foundEntity.getCreatedAt(),
                 true //just true because we already checked is anti-IDOR
@@ -154,7 +154,7 @@ public class WorkoutService {
                 foundEntity.getId(),
                 foundEntity.getName(),
                 fallbackExercises,
-                foundEntity.isPrivate(),
+                foundEntity.workoutPrivate(),
                 foundEntity.getCreatedBy(),
                 foundEntity.getCreatedAt(),
                 true //just true because we already checked is anti-IDOR

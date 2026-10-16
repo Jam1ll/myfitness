@@ -17,5 +17,5 @@ public record CreateWorkoutRequest(
         @NotEmpty(message = "There should be at least 1 valid exercise")
         List<UUID> exerciseIds,
 
-        boolean isPrivate) {
+        boolean workoutPrivate) {
 }

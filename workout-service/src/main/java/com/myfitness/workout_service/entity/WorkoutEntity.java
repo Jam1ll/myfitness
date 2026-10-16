@@ -33,7 +33,7 @@ public class WorkoutEntity {
     private List<UUID> exerciseIds;
 
     @Column(nullable = false)
-    private boolean isPrivate;
+    private boolean workoutPrivate;
 
     @Column(nullable = false)
     private String createdBy;

@@ -167,7 +167,7 @@ public class ExerciseServiceTest {
         when(exerciseMapper.toRecord(entity, requesterEmail)).thenReturn(response);
 
         // Se pasa el requesterEmail a la llamada
-        org.springframework.data.domain.Page<ExerciseResponse> resultPage = exerciseService.getAllExercises(requesterEmail, pageable);
+        org.springframework.data.domain.Page<ExerciseResponse> resultPage = exerciseService.getAllAccessibleExercises(requesterEmail, "", false, pageable);
 
         assertNotNull(resultPage, "Page must not be null");
         assertEquals(1, resultPage.getTotalElements(), "Page must contain exactly 1 element");

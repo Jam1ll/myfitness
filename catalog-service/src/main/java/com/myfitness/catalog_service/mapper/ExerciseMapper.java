@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface ExerciseMapper {
 
-    @Mapping(target = "isOwner", expression = "java(entity.getUserEmail().equals(userEmail))")
+    @Mapping(target = "exerciseOwner", expression = "java(entity.getUserEmail().equals(userEmail))")
     ExerciseResponse toRecord(ExerciseEntity entity, String userEmail);
 
     ExerciseEntity toEntity(CreateExerciseRequest record);

@@ -1,5 +1,6 @@
 package com.myfitness.catalog_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.myfitness.catalog_service.entity.enums.MuscleGroup;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,5 +21,5 @@ public record CreateExerciseRequest(
         @NotNull(message = "Exercise's muscle group can not be null")
         MuscleGroup muscleGroup,
 
-        boolean isPrivate) {
+        boolean exercisePrivate) {
 }

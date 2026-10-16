@@ -10,8 +10,8 @@ public record ExerciseResponse(
         String name,
         String description,
         MuscleGroup muscleGroup,
-        boolean isPrivate,
+        boolean exercisePrivate,
         String createdBy,
         LocalDateTime createAt,
-        boolean isOwner) {
+        boolean exerciseOwner) {
 }

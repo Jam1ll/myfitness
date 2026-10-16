@@ -8,7 +8,7 @@ public record WorkoutResponse(
         UUID id,
         String name,
         List<UUID> exerciseIds,
-        boolean isPrivate,
+        boolean workoutPrivate,
         String createdBy,
         LocalDateTime createdAt,
         boolean isOwner) {

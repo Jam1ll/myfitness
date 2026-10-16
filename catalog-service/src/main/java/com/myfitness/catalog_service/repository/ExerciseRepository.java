@@ -20,6 +20,17 @@ public interface ExerciseRepository extends JpaRepository<ExerciseEntity, UUID> 
 
     Page<ExerciseEntity> findByMuscleGroup(MuscleGroup muscleGroup, Pageable pageable);
 
+    @Query("SELECT e from ExerciseEntity e where e.exercisePrivate = false OR e.userEmail = :userEmail")
+    Page<ExerciseEntity> findPublicOrUserOwned(@Param("userEmail") String userEmail, Pageable pageable);
+
+    // Public and owned exercises filtered by name
+    @Query("SELECT e FROM ExerciseEntity e WHERE (e.exercisePrivate = false OR e.userEmail = :userEmail) AND LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<ExerciseEntity> findAccessibleExercisesWithSearch(@Param("userEmail") String userEmail, @Param("search") String search, Pageable pageable);
+
+    // Only Owner exercises filtered by name
+    @Query("SELECT e FROM ExerciseEntity e WHERE e.userEmail = :userEmail AND LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<ExerciseEntity> findUserExercisesWithSearch(@Param("userEmail") String userEmail, @Param("search") String search, Pageable pageable);
+
     @Modifying
     @Query("DELETE FROM ExerciseEntity e WHERE e.id = :id")
     int deleteExerciseById(@Param("id") UUID id);

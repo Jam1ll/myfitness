@@ -62,7 +62,7 @@ class WorkoutServiceTest {
                 .userEmail(userEmail)
                 .name(request.name())
                 .exerciseIds(exerciseIds)
-                .isPrivate(true)
+                .workoutPrivate(true)
                 .createdBy(userName)
                 .build();
 

@@ -103,19 +103,21 @@ public class ExerciseController {
 
     // GET ALL (PAGINATED) -> GET /api/v1/exercises
     @Operation(
-            summary = "Get all exercises (Paginated)",
-            description = "Retrieves a paginated list of all exercises available in the catalog."
+            summary = "Get all accessible exercises (Paginated)",
+            description = "Retrieves a paginated list of all exercises available for the user in the catalog, with optional search and filtering."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Paginated list of exercises retrieved successfully")
     })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<ExerciseResponse> getAllExercises(@RequestHeader("X-User-Email") String userEmail,
-                                                  @ParameterObject Pageable pageable) {
-        return exerciseService.getAllExercises(userEmail, pageable);
+    public Page<ExerciseResponse> getAllAccessibleExercises(
+            @RequestHeader("X-User-Email") String userEmail,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "false") boolean mineOnly,
+            @ParameterObject Pageable pageable) {
+        return exerciseService.getAllAccessibleExercises(userEmail, search, mineOnly, pageable);
     }
-
     // GET BY ID -> GET /api/v1/exercises/{id}
     @Operation(
             summary = "Get an exercise by ID",
