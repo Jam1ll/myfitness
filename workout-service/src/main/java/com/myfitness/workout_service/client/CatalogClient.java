@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 //OpenFeign implementation (internal communication within microservices)
-@FeignClient(name = "catalog-service")
+@FeignClient(name = "catalog-service", url = "http://catalog-service:8080")
 public interface CatalogClient {
 
     @GetMapping("/api/v1/exercises/{id}")

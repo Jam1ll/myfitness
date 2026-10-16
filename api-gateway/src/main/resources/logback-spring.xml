@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Importar los colores y formatos por defecto de la consola de Spring Boot -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Obtener el nombre del microservicio desde el application.yml -->
+    <springProperty scope="context" name="springAppName" source="spring.application.name"/>
+
+    <!-- Appender TCP para enviar los logs a Logstash en formato JSON -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>logstash:5000</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app_name":"${springAppName}"}</customFields>
+        </encoder>
+        <reconnectionDelay>10000</reconnectionDelay>
+        <queueSize>1024</queueSize>
+        <keepAliveDuration>5 minutes</keepAliveDuration>
+    </appender>
+
+    <!-- Configuración principal: Nivel INFO, salida a Consola y a Logstash -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOGSTASH"/>
+    </root>
+</configuration>

@@ -1,163 +1,114 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
-	<!-- ========================================================================= -->
-	<!-- 1. PROYECTO PADRE (SPRING BOOT STARTER PARENT)                            -->
-	<!-- ========================================================================= -->
-	<!-- Define la versión base de Spring Boot. Actúa como un "director de         -->
-	<!-- orquesta" que gestiona automáticamente las versiones compatibles de casi  -->
-	<!-- todas las librerías (Hibernate, Tomcat, Jackson, Lombok, etc.) para que   -->
-	<!-- no tengas que escribir el tag <version> en cada dependencia.              -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.1</version>
-		<relativePath/> <!-- Busca el padre en el repositorio de Maven, no en carpetas locales -->
+		<relativePath/>
 	</parent>
-
-	<!-- ========================================================================= -->
-	<!-- 2. METADATOS DEL MICROSERVICIO                                            -->
-	<!-- ========================================================================= -->
 	<groupId>com.myfitness</groupId>
 	<artifactId>workout-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>workout-service</name>
-	<description>Microservicio encargado de la gestión de rutinas de entrenamiento (MyFitness)</description>
-
-	<!-- ========================================================================= -->
-	<!-- 3. PROPIEDADES Y VARIABLES GLOBALES                                       -->
-	<!-- ========================================================================= -->
+	<description>MyFitness workout routines microservice</description>
 	<properties>
-		<!-- Fija la versión del lenguaje Java en 21 (LTS - Long Term Support) -->
 		<java.version>21</java.version>
-		<!-- Fija la versión del tren de lanzamiento de Spring Cloud (Eureka, Feign, etc.) -->
 		<spring-cloud.version>2025.1.3</spring-cloud.version>
+		<mapstruct.version>1.5.5.Final</mapstruct.version>
+		<lombok.version>1.18.42</lombok.version>
 	</properties>
-
-	<!-- ========================================================================= -->
-	<!-- 4. DEPENDENCIAS DEL PROYECTO                                              -->
-	<!-- ========================================================================= -->
 	<dependencies>
 
-		<!-- 4.1. ARQUITECTURA WEB Y VALIDACIÓN -->
+		<!-- Retry Config Server connection -->
+		<dependency>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
+		</dependency>
 
-		<!-- Spring WebMVC: Permite construir APIs RESTful (@RestController, @PostMapping), -->
-		<!-- incluye el servidor embebido Apache Tomcat y Jackson para convertir objetos a JSON. -->
+		<!--  Logstash translator  -->
+		<dependency>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>8.0</version>
+		</dependency>
+
+		<!--  Config Server  -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+
+		<!--  Web API and validation  -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
-
-		<!-- Validation (Hibernate Validator): Permite validar los DTOs de entrada -->
-		<!-- usando anotaciones como @Valid, @NotNull, @NotBlank, @NotEmpty, etc. -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-
-		<!-- 4.2. PERSISTENCIA Y BASE DE DATOS -->
-
-		<!-- Spring Data JPA: Facilita el acceso a la base de datos usando Hibernate como ORM. -->
-		<!-- Permite usar interfaces como JpaRepository para hacer consultas sin escribir SQL manual. -->
+		<!--  Persistence  -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-
-		<!-- Driver de PostgreSQL: El traductor que permite a Java/Hibernate conectarse -->
-		<!-- por red al motor de base de datos PostgreSQL. 'runtime' significa que solo -->
-		<!-- se necesita cuando la aplicación corre, no mientras compila tu código. -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-
-		<!-- 4.3. COMUNICACIÓN DE MICROSERVICIOS Y NUBE (SPRING CLOUD) -->
-
-		<!-- Eureka Discovery Client: Permite que este microservicio se registre con su IP -->
-		<!-- en el servidor Eureka y pueda descubrir dónde están otros servicios (como catalog-service). -->
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-		</dependency>
-
-		<!-- OpenFeign: Cliente HTTP declarativo. Permite llamar a otros microservicios -->
-		<!-- (ej. validar ejercicios en el catálogo) creando solo una interfaz Java (@FeignClient). -->
+		<!--  Discovery, monitoring, and tracing  -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>
-
-		<!-- 4.4. RESILIENCIA Y TOLERANCIA A FALLOS -->
-
-		<!-- Starter de AspectJ (Reemplaza al antiguo spring-boot-starter-aop en Boot 4). -->
-		<!-- Permite que las anotaciones como @CircuitBreaker intercepten los métodos. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-zipkin</artifactId>
+		</dependency>
+		<!--  Resilience  -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-aspectj</artifactId>
 		</dependency>
-
-		<!-- Integración oficial de Resilience4j diseñada para Spring Boot 4 -->
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-spring-boot4</artifactId>
 			<version>2.4.0</version>
 		</dependency>
-
-		<!-- 4.5. PRODUCTIVIDAD Y MAPEO DE DATOS (TIEMPO DE COMPILACIÓN) -->
-
-		<!-- Lombok: Librería que genera código repetitivo automáticamente al compilar -->
-		<!-- (@Getter, @Setter, @Builder, @RequiredArgsConstructor). -->
+		<!--  Mapping and boilerplate reduction  -->
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>${mapstruct.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-
-		<!-- MapStruct: Generador de mapeadores de alto rendimiento. Crea automáticamente -->
-		<!-- el código para convertir Entidades JPA (WorkoutEntity) a DTOs (WorkoutResponse) -->
-		<!-- en tiempo de compilación, sin usar reflexión lenta en tiempo de ejecución. -->
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct</artifactId>
-			<version>1.5.5.Final</version>
-		</dependency>
-
-		<!-- 4.6. TESTING (PRUEBAS AUTOMATIZADAS) -->
-
-		<!-- Herramientas para pruebas de integración y unitarias de la capa de base de datos JPA -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- Herramientas (como MockMvc) para probar tus controladores REST sin levantar todo el servidor -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- 4.7. API DOCUMENTATION (OPENAPI 3 / SWAGGER UI) -->
-		<!-- Automatically generates interactive Swagger UI documentation from REST controllers -->
+		<!--  API documentation  -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>3.0.0</version>
 		</dependency>
-
+		<!--  Test starters  -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-
-	<!-- ========================================================================= -->
-	<!-- 5. GESTIÓN DE DEPENDENCIAS DE SPRING CLOUD (BOM - Bill of Materials)      -->
-	<!-- ========================================================================= -->
-	<!-- Así como el <parent> controla las versiones de Spring Boot, este bloque   -->
-	<!-- controla que Eureka, OpenFeign y Resilience4j descarguen versiones        -->
-	<!-- 100% compatibles entre sí según la propiedad ${spring-cloud.version}.     -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -169,16 +120,8 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
-	<!-- ========================================================================= -->
-	<!-- 6. CONFIGURACIÓN DE COMPILACIÓN Y EMPAQUETADO (BUILD)                     -->
-	<!-- ========================================================================= -->
 	<build>
 		<plugins>
-
-			<!-- Plugin de Empaquetado de Spring Boot: Crea el archivo .jar ejecutable final. -->
-			<!-- Excluimos Lombok porque ya hizo su trabajo al compilar y no hace falta -->
-			<!-- que ocupe espacio dentro del archivo .jar de producción. -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -191,33 +134,21 @@
 					</excludes>
 				</configuration>
 			</plugin>
-
-			<!-- Plugin del Compilador de Java (Maven Compiler Plugin): -->
-			<!-- CRÍTICO: Define el orden exacto en que actúan los generadores de código -->
-			<!-- para evitar que MapStruct se ejecute antes de que Lombok cree los Getters. -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
 					<annotationProcessorPaths>
-						<!-- Paso 1: Lombok genera Getters, Setters, Builders y Constructores. -->
-						<!-- Usamos ${lombok.version} para usar la versión oficial de Spring Boot -->
-						<!-- y evitar choques con compiladores nuevos de Java. -->
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 							<version>${lombok.version}</version>
 						</path>
-						<!-- Paso 2: El procesador de MapStruct que escribe las clases MapperImpl. -->
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>1.5.5.Final</version>
+							<version>${mapstruct.version}</version>
 						</path>
-						<!-- Paso 3: El "puente" oficial que obliga a Lombok y MapStruct a -->
-						<!-- comunicarse durante la compilación para no devolver objetos en null. -->
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok-mapstruct-binding</artifactId>
@@ -226,7 +157,6 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 </project>
