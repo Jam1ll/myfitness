@@ -71,15 +71,15 @@ public class WorkoutService {
                 .orElseThrow(() -> new ResourceNotFoundException("Workout with id '" + id + "' not found"));
 
         //validation
-        if (workoutRequest.exerciseIds() != null && !workoutRequest.exerciseIds().isEmpty()) {
-            boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
+        if (workoutRequest.workoutExerciseItems() != null && !workoutRequest.workoutExerciseItems().isEmpty()) {
+            boolean allValid = catalogClient.validateExercises(workoutRequest.workoutExerciseItems());
             if (!allValid) throw new IllegalArgumentException
                     ("Error: One or more provided exercise IDs do not exist in the catalog.");
         }
 
         //update
         foundEntity.setName(workoutRequest.name());
-        foundEntity.setExerciseIds(workoutRequest.exerciseIds());
+        foundEntity.setExerciseIds(workoutRequest.workoutExerciseItems());
 
         //save changes
         WorkoutEntity updatedWorkout = workoutRepository.save(foundEntity);

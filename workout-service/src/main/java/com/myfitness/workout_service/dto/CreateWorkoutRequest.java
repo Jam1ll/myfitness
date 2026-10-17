@@ -15,8 +15,8 @@ public record CreateWorkoutRequest(
         @Size(min = 3, max = 100, message = "Exercise's name must have between 3 and 100 characters")
         String name,
 
-        @NotNull(message = "Exercise list cannot be null")
-        List<UUID> exerciseIds,
+        @NotNull(message = "Exercises' list can not be null")
+        List<WorkoutExerciseItemDto> workoutExerciseItems,
 
         @NotNull(message = "Privacy flag cannot be null")
         Boolean workoutPrivate) {

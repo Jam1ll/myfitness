@@ -7,9 +7,9 @@ import java.util.UUID;
 public record WorkoutDetailResponse(
         UUID id,
         String name,
-        List<ExerciseSummaryDto> exercises,
         boolean workoutPrivate,
         String createdBy,
         LocalDateTime createdAt,
-        boolean workoutOwner) {
+        boolean workoutOwner,
+        List<EnrichedWorkoutExerciseDto> enrichedWorkoutExercises) {
 }
