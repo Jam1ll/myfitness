@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,23 +22,34 @@ public class WorkoutEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "user_email", nullable = false)
     private String userEmail;
 
     @Column(nullable = false)
     private String name;
 
-    @ElementCollection
-    @CollectionTable(name = "workout_exercises", joinColumns = @JoinColumn(name = "workout_id"))
-    @Column(name = "exercise_id")
-    private List<UUID> exerciseIds;
-
-    @Column(nullable = false)
+    @Column(name = "workout_private", nullable = false)
     private boolean workoutPrivate;
 
-    @Column(nullable = false)
+    @Column(name = "created_by", nullable = false)
     private String createdBy;
 
     @CreationTimestamp
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "workout", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
+    @Builder.Default
+    private List<WorkoutExerciseEntity> workoutExerciseEntities = new ArrayList<>();
+
+    //helpers to sync bidirectional relation
+    public void addExercise(WorkoutExerciseEntity exercise) {
+        workoutExerciseEntities.add(exercise);
+        exercise.setWorkout(this);
+    }
+
+    public void clearExercises() {
+        workoutExerciseEntities.clear();
+    }
 }
