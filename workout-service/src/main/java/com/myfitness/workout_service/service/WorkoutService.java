@@ -3,6 +3,7 @@ package com.myfitness.workout_service.service;
 import com.myfitness.workout_service.client.CatalogClient;
 import com.myfitness.workout_service.dto.*;
 import com.myfitness.workout_service.entity.WorkoutEntity;
+import com.myfitness.workout_service.entity.WorkoutExerciseEntity;
 import com.myfitness.workout_service.exception.ResourceNotFoundException;
 import com.myfitness.workout_service.exception.ServiceUnavailableException;
 import com.myfitness.workout_service.mapper.WorkoutMapper;
@@ -15,10 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,24 +34,42 @@ public class WorkoutService {
     //CREATE (PROTECTED WITH CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "createWorkoutFallback")
     public WorkoutResponse createWorkout(String userEmail, String userName, CreateWorkoutRequest workoutRequest) {
-        if (workoutRequest.exerciseIds() != null && !workoutRequest.exerciseIds().isEmpty()) {
-            boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
-            if (!allValid) throw new IllegalArgumentException
-                    ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        List<WorkoutExerciseItemDto> items = workoutRequest.workoutExerciseItems();
+
+        if (items != null && !items.isEmpty()) {
+            List<UUID> exerciseIds = items.stream()
+                    .map(WorkoutExerciseItemDto::exerciseId)
+                    .toList();
+
+            boolean allValid = catalogClient.validateExercises(exerciseIds);
+            if (!allValid) {
+                throw new IllegalArgumentException("Error: One or more provided exercise IDs do not exist in the catalog.");
+            }
         }
 
-        //if every exercise is valid, proceed to build and save the routine attached to the user's email
         WorkoutEntity workoutEntity = WorkoutEntity.builder()
                 .userEmail(userEmail)
                 .name(workoutRequest.name())
-                .exerciseIds(workoutRequest.exerciseIds())
                 .workoutPrivate(workoutRequest.workoutPrivate())
                 .createdBy(userName)
                 .build();
 
-        WorkoutEntity entity = workoutRepository.save(workoutEntity);
+        if (items != null) {
+            for (WorkoutExerciseItemDto item : items) {
+                WorkoutExerciseEntity workoutExercise = WorkoutExerciseEntity.builder()
+                        .exerciseId(item.exerciseId())
+                        .targetSets(item.targetSets())
+                        .targetReps(item.targetReps())
+                        .restTimeSeconds(item.restTimeSeconds())
+                        .orderIndex(item.orderIndex())
+                        .build();
+                workoutEntity.addExercise(workoutExercise);
+            }
+        }
 
-        return workoutMapper.toRecord(entity, userEmail);
+        WorkoutEntity savedEntity = workoutRepository.save(workoutEntity);
+
+        return workoutMapper.toRecord(savedEntity, userEmail);
     }
 
     //
@@ -57,31 +77,46 @@ public class WorkoutService {
     //
     public WorkoutResponse createWorkoutFallback(String userEmail, String userName, CreateWorkoutRequest workoutRequest, Throwable t) {
         log.error("Circuit Breaker triggered at createWorkout. Cause: {}", t.getMessage());
-
-        //throw a 503 Service Unavailable without collapsing the server
-        throw new ServiceUnavailableException
-                ("Exercises' catalog's not available at the moment. Please try again later.");
+        throw new ServiceUnavailableException("Exercises' catalog's not available at the moment. Please try again later.");
     }
 
     //UPDATE (PROTECTED WITH CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "updateWorkoutFallback")
+    @Transactional
     public WorkoutResponse updateWorkout(String userEmail, UUID id, UpdateWorkoutRequest workoutRequest) {
-        //search routine
         WorkoutEntity foundEntity = workoutRepository.findWorkoutByIdAndUserEmail(id, userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout with id '" + id + "' not found"));
 
-        //validation
-        if (workoutRequest.workoutExerciseItems() != null && !workoutRequest.workoutExerciseItems().isEmpty()) {
-            boolean allValid = catalogClient.validateExercises(workoutRequest.workoutExerciseItems());
-            if (!allValid) throw new IllegalArgumentException
-                    ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        List<WorkoutExerciseItemDto> items = workoutRequest.workoutExerciseItems();
+
+        if (items != null && !items.isEmpty()) {
+            List<UUID> exerciseIds = items.stream()
+                    .map(WorkoutExerciseItemDto::exerciseId)
+                    .toList();
+
+            boolean allValid = catalogClient.validateExercises(exerciseIds);
+            if (!allValid) {
+                throw new IllegalArgumentException("Error: One or more provided exercise IDs do not exist in the catalog.");
+            }
         }
 
-        //update
         foundEntity.setName(workoutRequest.name());
-        foundEntity.setExerciseIds(workoutRequest.workoutExerciseItems());
+        foundEntity.setWorkoutPrivate(workoutRequest.workoutPrivate());
 
-        //save changes
+        foundEntity.clearExercises();
+        if (items != null) {
+            for (WorkoutExerciseItemDto item : items) {
+                WorkoutExerciseEntity workoutExercise = WorkoutExerciseEntity.builder()
+                        .exerciseId(item.exerciseId())
+                        .targetSets(item.targetSets())
+                        .targetReps(item.targetReps())
+                        .restTimeSeconds(item.restTimeSeconds())
+                        .orderIndex(item.orderIndex())
+                        .build();
+                foundEntity.addExercise(workoutExercise);
+            }
+        }
+
         WorkoutEntity updatedWorkout = workoutRepository.save(foundEntity);
 
         return workoutMapper.toRecord(updatedWorkout, foundEntity.getUserEmail());
@@ -90,12 +125,9 @@ public class WorkoutService {
     //
     //UPDATE FALLBACK
     //
-    public WorkoutResponse updateWorkoutFallback(UUID id, UpdateWorkoutRequest workoutRequest, Throwable t) {
+    public WorkoutResponse updateWorkoutFallback(String userEmail, UUID id, UpdateWorkoutRequest workoutRequest, Throwable t) {
         log.error("Circuit Breaker triggered at updateWorkout. Cause: {}", t.getMessage());
-
-        //throw a 503 Service Unavailable without collapsing the server
-        throw new ServiceUnavailableException
-                ("Exercises' catalog's not available at the moment. Please try again later.");
+        throw new ServiceUnavailableException("Exercises' catalog's not available at the moment. Please try again later.");
     }
 
     //DELETE
@@ -132,19 +164,44 @@ public class WorkoutService {
             throw new ResourceNotFoundException("Workout not found or you don't have access.");
         }
 
-        List<ExerciseSummaryDto> exerciseSummaries = new ArrayList<>();
-        if (workout.getExerciseIds() != null && !workout.getExerciseIds().isEmpty()) {
-            exerciseSummaries = catalogClient.getExercisesByIds(userEmail, workout.getExerciseIds());
+        List<EnrichedWorkoutExerciseDto> enrichedExercises = new ArrayList<>();
+
+        if (workout.getWorkoutExerciseEntities() != null && !workout.getWorkoutExerciseEntities().isEmpty()) {
+            List<UUID> exerciseIds = workout.getWorkoutExerciseEntities().stream()
+                    .map(WorkoutExerciseEntity::getExerciseId)
+                    .toList();
+
+            List<ExerciseSummaryDto> catalogExercises = catalogClient.getExercisesByIds(userEmail, exerciseIds);
+            Map<UUID, ExerciseSummaryDto> catalogMap = catalogExercises.stream()
+                    .collect(Collectors.toMap(ExerciseSummaryDto::id, ex -> ex));
+
+            for (WorkoutExerciseEntity we : workout.getWorkoutExerciseEntities()) {
+                ExerciseSummaryDto summary = catalogMap.get(we.getExerciseId());
+                String name = summary != null ? summary.name() : "Unknown";
+                String description = summary != null ? summary.description() : "";
+                String muscleGroup = summary != null ? summary.muscleGroup() : "UNKNOWN";
+
+                enrichedExercises.add(new EnrichedWorkoutExerciseDto(
+                        we.getExerciseId(),
+                        name,
+                        description,
+                        muscleGroup,
+                        we.getTargetSets(),
+                        we.getTargetReps(),
+                        we.getRestTimeSeconds(),
+                        we.getOrderIndex()
+                ));
+            }
         }
 
         return new WorkoutDetailResponse(
                 workout.getId(),
                 workout.getName(),
-                exerciseSummaries,
                 workout.isWorkoutPrivate(),
                 workout.getCreatedBy(),
                 workout.getCreatedAt(),
-                isOwner
+                isOwner,
+                enrichedExercises
         );
     }
 
@@ -157,26 +214,26 @@ public class WorkoutService {
         WorkoutEntity foundEntity = workoutRepository.findWorkoutByIdAndUserEmail(id, userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout with id '" + id + "' not found."));
 
-        List<ExerciseSummaryDto> fallbackExercises = foundEntity.getExerciseIds()
-                .stream()
-                .map(exerciseId -> new ExerciseSummaryDto(
-                        exerciseId,
+        List<EnrichedWorkoutExerciseDto> fallbackExercises = foundEntity.getWorkoutExerciseEntities().stream()
+                .map(we -> new EnrichedWorkoutExerciseDto(
+                        we.getExerciseId(),
                         "Details not available",
                         "Catalog service is under maintenance",
                         "UNKNOWN",
-                        false,
-                        "UNKNOWN",
-                        LocalDateTime.now()
+                        we.getTargetSets(),
+                        we.getTargetReps(),
+                        we.getRestTimeSeconds(),
+                        we.getOrderIndex()
                 )).toList();
 
         return new WorkoutDetailResponse(
                 foundEntity.getId(),
                 foundEntity.getName(),
-                fallbackExercises,
                 foundEntity.isWorkoutPrivate(),
                 foundEntity.getCreatedBy(),
                 foundEntity.getCreatedAt(),
-                true //just true because we already checked is anti-IDOR
+                true,
+                fallbackExercises
         );
     }
 }

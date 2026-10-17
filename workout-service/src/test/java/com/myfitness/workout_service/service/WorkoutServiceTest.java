@@ -1,12 +1,9 @@
 package com.myfitness.workout_service.service;
 
 import com.myfitness.workout_service.client.CatalogClient;
-import com.myfitness.workout_service.dto.CreateWorkoutRequest;
-import com.myfitness.workout_service.dto.ExerciseSummaryDto;
-import com.myfitness.workout_service.dto.UpdateWorkoutRequest;
-import com.myfitness.workout_service.dto.WorkoutDetailResponse;
-import com.myfitness.workout_service.dto.WorkoutResponse;
+import com.myfitness.workout_service.dto.*;
 import com.myfitness.workout_service.entity.WorkoutEntity;
+import com.myfitness.workout_service.entity.WorkoutExerciseEntity;
 import com.myfitness.workout_service.exception.ResourceNotFoundException;
 import com.myfitness.workout_service.mapper.WorkoutMapper;
 import com.myfitness.workout_service.repository.WorkoutRepository;
@@ -52,19 +49,26 @@ class WorkoutServiceTest {
         String userName = "JohnDoe";
         UUID exerciseId1 = UUID.randomUUID();
         UUID exerciseId2 = UUID.randomUUID();
+
+        List<WorkoutExerciseItemDto> exerciseItems = List.of(
+                new WorkoutExerciseItemDto(exerciseId1, 3, 10, 60, 0),
+                new WorkoutExerciseItemDto(exerciseId2, 4, 12, 90, 1)
+        );
         List<UUID> exerciseIds = List.of(exerciseId1, exerciseId2);
 
-        CreateWorkoutRequest request = new CreateWorkoutRequest("Test routine", exerciseIds, true);
+        CreateWorkoutRequest request = new CreateWorkoutRequest("Test routine", exerciseItems, true);
         UUID generatedWorkoutId = UUID.randomUUID();
 
         WorkoutEntity savedEntity = WorkoutEntity.builder()
                 .id(generatedWorkoutId)
                 .userEmail(userEmail)
                 .name(request.name())
-                .exerciseIds(exerciseIds)
                 .workoutPrivate(true)
                 .createdBy(userName)
                 .build();
+
+        savedEntity.addExercise(WorkoutExerciseEntity.builder().exerciseId(exerciseId1).targetSets(3).targetReps(10).restTimeSeconds(60).orderIndex(0).build());
+        savedEntity.addExercise(WorkoutExerciseEntity.builder().exerciseId(exerciseId2).targetSets(4).targetReps(12).restTimeSeconds(90).orderIndex(1).build());
 
         WorkoutResponse expectedResponse = new WorkoutResponse(
                 generatedWorkoutId,
@@ -96,8 +100,11 @@ class WorkoutServiceTest {
     void createWorkout_WhenExercisesAreInvalid_ShouldThrowExceptionAndNeverSave() {
         String userEmail = "test@gmail.com";
         String userName = "JohnDoe";
-        List<UUID> fakeExerciseIds = List.of(UUID.randomUUID());
-        CreateWorkoutRequest request = new CreateWorkoutRequest("Invalid routine", fakeExerciseIds, true);
+        UUID fakeId = UUID.randomUUID();
+        List<WorkoutExerciseItemDto> fakeItems = List.of(new WorkoutExerciseItemDto(fakeId, 3, 10, 60, 0));
+        List<UUID> fakeExerciseIds = List.of(fakeId);
+
+        CreateWorkoutRequest request = new CreateWorkoutRequest("Invalid routine", fakeItems, true);
 
         when(catalogClient.validateExercises(fakeExerciseIds)).thenReturn(false);
 
@@ -124,8 +131,15 @@ class WorkoutServiceTest {
                 .id(workoutId)
                 .userEmail(userEmail)
                 .name("Full Body")
-                .exerciseIds(exerciseIds)
                 .build();
+
+        existingWorkout.addExercise(WorkoutExerciseEntity.builder()
+                .exerciseId(exerciseId)
+                .targetSets(3)
+                .targetReps(10)
+                .restTimeSeconds(60)
+                .orderIndex(0)
+                .build());
 
         List<ExerciseSummaryDto> catalogExercises = List.of(
                 new ExerciseSummaryDto(exerciseId, "Bench Press", "Barbell chest press", "CHEST", true, "JohnDoe", LocalDateTime.MIN)
@@ -141,8 +155,8 @@ class WorkoutServiceTest {
 
         assertNotNull(detailResponse);
         assertEquals(workoutId, detailResponse.id());
-        assertEquals(1, detailResponse.exercises().size());
-        assertEquals("Bench Press", detailResponse.exercises().getFirst().name());
+        assertEquals(1, detailResponse.enrichedWorkoutExercises().size());
+        assertEquals("Bench Press", detailResponse.enrichedWorkoutExercises().getFirst().name());
 
         verify(workoutRepository, times(1)).findById(workoutId);
         verify(catalogClient, times(1)).getExercisesByIds(userEmail, exerciseIds);
@@ -174,14 +188,22 @@ class WorkoutServiceTest {
         boolean mineOnly = false;
         Pageable pageable = PageRequest.of(0, 10);
         UUID workoutId = UUID.randomUUID();
-        List<UUID> exerciseIds = List.of(UUID.randomUUID());
+        UUID exerciseId = UUID.randomUUID();
+        List<UUID> exerciseIds = List.of(exerciseId);
 
         WorkoutEntity entity = WorkoutEntity.builder()
                 .id(workoutId)
                 .userEmail(userEmail)
                 .name("Leg Day")
-                .exerciseIds(exerciseIds)
                 .build();
+
+        entity.addExercise(WorkoutExerciseEntity.builder()
+                .exerciseId(exerciseId)
+                .targetSets(3)
+                .targetReps(12)
+                .restTimeSeconds(90)
+                .orderIndex(0)
+                .build());
 
         WorkoutResponse responseDto = new WorkoutResponse(
                 workoutId,
@@ -208,19 +230,22 @@ class WorkoutServiceTest {
         verify(workoutRepository, times(1)).findAccessibleWorkoutsWithSearch(userEmail, searchQuery, pageable);
         verify(workoutMapper, times(1)).toRecord(entity, userEmail);
     }
+
     @Test
     @DisplayName("Should update an existing workout when new exercise IDs are valid")
     void updateWorkout_WhenValid_ShouldUpdateAndReturnWorkoutResponse() {
         UUID workoutId = UUID.randomUUID();
         String userEmail = "test@gmail.com";
-        List<UUID> newExerciseIds = List.of(UUID.randomUUID());
-        UpdateWorkoutRequest updateRequest = new UpdateWorkoutRequest("Updated Routine", newExerciseIds, true);
+        UUID newExerciseId = UUID.randomUUID();
+        List<WorkoutExerciseItemDto> newItems = List.of(new WorkoutExerciseItemDto(newExerciseId, 3, 10, 60, 0));
+        List<UUID> newExerciseIds = List.of(newExerciseId);
+
+        UpdateWorkoutRequest updateRequest = new UpdateWorkoutRequest("Updated Routine", newItems, true);
 
         WorkoutEntity existingEntity = WorkoutEntity.builder()
                 .id(workoutId)
                 .userEmail(userEmail)
                 .name("Old Routine")
-                .exerciseIds(List.of())
                 .build();
 
         WorkoutResponse expectedResponse = new WorkoutResponse(
@@ -243,7 +268,7 @@ class WorkoutServiceTest {
         assertNotNull(actualResponse);
         assertEquals("Updated Routine", actualResponse.name());
         assertEquals("Updated Routine", existingEntity.getName());
-        assertEquals(newExerciseIds, existingEntity.getExerciseIds());
+        assertEquals(1, existingEntity.getWorkoutExerciseEntities().size());
 
         verify(catalogClient, times(1)).validateExercises(newExerciseIds);
         verify(workoutRepository, times(1)).save(existingEntity);
