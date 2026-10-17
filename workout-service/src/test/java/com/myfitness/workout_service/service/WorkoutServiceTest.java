@@ -131,8 +131,9 @@ class WorkoutServiceTest {
                 new ExerciseSummaryDto(exerciseId, "Bench Press", "Barbell chest press", "CHEST", true, "JohnDoe", LocalDateTime.MIN)
         );
 
-        when(workoutRepository.findWorkoutByIdAndUserEmail(workoutId, userEmail))
+        when(workoutRepository.findById(workoutId))
                 .thenReturn(Optional.of(existingWorkout));
+
         when(catalogClient.getExercisesByIds(userEmail, exerciseIds))
                 .thenReturn(catalogExercises);
 
@@ -143,17 +144,17 @@ class WorkoutServiceTest {
         assertEquals(1, detailResponse.exercises().size());
         assertEquals("Bench Press", detailResponse.exercises().getFirst().name());
 
-        verify(workoutRepository, times(1)).findWorkoutByIdAndUserEmail(workoutId, userEmail);
+        verify(workoutRepository, times(1)).findById(workoutId);
         verify(catalogClient, times(1)).getExercisesByIds(userEmail, exerciseIds);
     }
 
     @Test
-    @DisplayName("Should throw ResourceNotFoundException when workout does not exist or belongs to another user")
+    @DisplayName("Should throw ResourceNotFoundException when workout does not exist")
     void getWorkoutById_WhenNotFoundOrWrongUser_ShouldThrowResourceNotFoundException() {
         UUID workoutId = UUID.randomUUID();
         String unauthorizedEmail = "attacker@gmail.com";
 
-        when(workoutRepository.findWorkoutByIdAndUserEmail(workoutId, unauthorizedEmail))
+        when(workoutRepository.findById(workoutId))
                 .thenReturn(Optional.empty());
 
         assertThrows(
@@ -161,13 +162,16 @@ class WorkoutServiceTest {
                 () -> workoutService.getWorkoutById(workoutId, unauthorizedEmail)
         );
 
+        verify(workoutRepository, times(1)).findById(workoutId);
         verify(catalogClient, never()).getExercisesByIds(any(), any());
     }
 
     @Test
-    @DisplayName("Should return a paginated list of workouts belonging to the specified user email")
-    void getWorkoutsByUserEmail_ShouldReturnPageOfWorkoutResponse() {
+    @DisplayName("Should return a paginated list of accessible workouts with search")
+    void getAllAccessibleWorkouts_ShouldReturnPageOfWorkoutResponse() {
         String userEmail = "test@gmail.com";
+        String searchQuery = "";
+        boolean mineOnly = false;
         Pageable pageable = PageRequest.of(0, 10);
         UUID workoutId = UUID.randomUUID();
         List<UUID> exerciseIds = List.of(UUID.randomUUID());
@@ -190,18 +194,20 @@ class WorkoutServiceTest {
         );
         Page<WorkoutEntity> entityPage = new PageImpl<>(List.of(entity));
 
-        when(workoutRepository.findAllWorkoutsByUserEmail(userEmail, pageable)).thenReturn(entityPage);
+        when(workoutRepository.findAccessibleWorkoutsWithSearch(eq(userEmail), eq(searchQuery), eq(pageable)))
+                .thenReturn(entityPage);
+
         when(workoutMapper.toRecord(entity, userEmail)).thenReturn(responseDto);
 
-        Page<WorkoutResponse> result = workoutService.getAllAccessibleWorkouts(userEmail, "", false, pageable);
+        Page<WorkoutResponse> result = workoutService.getAllAccessibleWorkouts(userEmail, searchQuery, mineOnly, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         assertEquals("Leg Day", result.getContent().getFirst().name());
 
-        verify(workoutRepository, times(1)).findAllWorkoutsByUserEmail(userEmail, pageable);
+        verify(workoutRepository, times(1)).findAccessibleWorkoutsWithSearch(userEmail, searchQuery, pageable);
+        verify(workoutMapper, times(1)).toRecord(entity, userEmail);
     }
-
     @Test
     @DisplayName("Should update an existing workout when new exercise IDs are valid")
     void updateWorkout_WhenValid_ShouldUpdateAndReturnWorkoutResponse() {
@@ -249,7 +255,6 @@ class WorkoutServiceTest {
         UUID workoutId = UUID.randomUUID();
         String userEmail = "test@gmail.com";
 
-        // EL ORDEN CORREGIDO DE LOS PARÁMETROS: (String userEmail, UUID id)
         when(workoutRepository.deleteWorkoutByIdAndUserEmail(userEmail, workoutId)).thenReturn(1);
 
         workoutService.deleteWorkout(userEmail, workoutId);

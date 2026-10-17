@@ -58,7 +58,6 @@ public class ExerciseServiceTest {
         when(exerciseMapper.toEntity(request)).thenReturn(mappedEntity);
         when(exerciseRepository.save(mappedEntity)).thenReturn(savedEntity);
 
-        // Se añade el userEmail para satisfacer la firma de toRecord
         when(exerciseMapper.toRecord(savedEntity, userEmail)).thenReturn(expectedResponse);
 
         ExerciseResponse actualResponse = exerciseService.createExercise(userEmail, userName, request);
@@ -123,7 +122,6 @@ public class ExerciseServiceTest {
         when(exerciseRepository.findById(nonExistentId)).thenReturn(java.util.Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            // Se añade el requesterEmail a la llamada
             exerciseService.getExerciseById(nonExistentId, requesterEmail);
         }, "Must throw ResourceNotFoundException when the ID is not found");
 
@@ -140,7 +138,6 @@ public class ExerciseServiceTest {
         when(exerciseRepository.findByName(nonExistentName)).thenReturn(java.util.Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> {
-            // Se asume que el método getExerciseByName también pide el requesterEmail
             exerciseService.getExerciseByName(nonExistentName, requesterEmail);
         }, "Must throw ResourceNotFoundException when the name is not found");
 
@@ -149,9 +146,11 @@ public class ExerciseServiceTest {
     }
 
     @Test
-    @DisplayName("Must return a paginated list of ExerciseResponse")
-    void getAllExercises_ReturnsPaginatedList() {
+    @DisplayName("Must return a paginated list of accessible ExerciseResponse")
+    void getAllAccessibleExercises_ReturnsPaginatedList() {
         String requesterEmail = "test@gmail.com";
+        String searchQuery = "";
+        boolean mineOnly = false;
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
 
         ExerciseEntity entity = new ExerciseEntity();
@@ -161,19 +160,18 @@ public class ExerciseServiceTest {
         ExerciseResponse response = new ExerciseResponse(entity.getId(), "Squat", "Leg exercise", MuscleGroup.LEGS, true, "JohnDoe", LocalDateTime.MIN, true);
         org.springframework.data.domain.Page<ExerciseEntity> entityPage = new org.springframework.data.domain.PageImpl<>(java.util.List.of(entity));
 
-        when(exerciseRepository.findAll(pageable)).thenReturn(entityPage);
+        when(exerciseRepository.findAccessibleExercisesWithSearch(eq(requesterEmail), eq(searchQuery), eq(pageable)))
+                .thenReturn(entityPage);
 
-        // Se añade el requesterEmail para la firma del mapper
         when(exerciseMapper.toRecord(entity, requesterEmail)).thenReturn(response);
 
-        // Se pasa el requesterEmail a la llamada
-        org.springframework.data.domain.Page<ExerciseResponse> resultPage = exerciseService.getAllAccessibleExercises(requesterEmail, "", false, pageable);
+        org.springframework.data.domain.Page<ExerciseResponse> resultPage = exerciseService.getAllAccessibleExercises(requesterEmail, searchQuery, mineOnly, pageable);
 
         assertNotNull(resultPage, "Page must not be null");
         assertEquals(1, resultPage.getTotalElements(), "Page must contain exactly 1 element");
         assertEquals("Squat", resultPage.getContent().getFirst().name(), "Exercise name must match");
 
-        verify(exerciseRepository, times(1)).findAll(pageable);
+        verify(exerciseRepository, times(1)).findAccessibleExercisesWithSearch(requesterEmail, searchQuery, pageable);
         verify(exerciseMapper, times(1)).toRecord(entity, requesterEmail);
     }
 
@@ -194,10 +192,8 @@ public class ExerciseServiceTest {
 
         when(exerciseRepository.findByMuscleGroup(targetGroup, pageable)).thenReturn(entityPage);
 
-        // Se añade el requesterEmail al mock del mapper
         when(exerciseMapper.toRecord(entity, requesterEmail)).thenReturn(response);
 
-        // Se añade el requesterEmail a la llamada al servicio
         org.springframework.data.domain.Page<ExerciseResponse> resultPage = exerciseService.getAllExercisesByMuscleGroup(targetGroup, requesterEmail, pageable);
 
         assertNotNull(resultPage, "Page must not be null");
