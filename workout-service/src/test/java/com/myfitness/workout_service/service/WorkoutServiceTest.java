@@ -133,7 +133,7 @@ class WorkoutServiceTest {
 
         when(workoutRepository.findWorkoutByIdAndUserEmail(workoutId, userEmail))
                 .thenReturn(Optional.of(existingWorkout));
-        when(catalogClient.getExercisesByIds(exerciseIds))
+        when(catalogClient.getExercisesByIds(userEmail, exerciseIds))
                 .thenReturn(catalogExercises);
 
         WorkoutDetailResponse detailResponse = workoutService.getWorkoutById(workoutId, userEmail);
@@ -144,7 +144,7 @@ class WorkoutServiceTest {
         assertEquals("Bench Press", detailResponse.exercises().getFirst().name());
 
         verify(workoutRepository, times(1)).findWorkoutByIdAndUserEmail(workoutId, userEmail);
-        verify(catalogClient, times(1)).getExercisesByIds(exerciseIds);
+        verify(catalogClient, times(1)).getExercisesByIds(userEmail, exerciseIds);
     }
 
     @Test
@@ -161,7 +161,7 @@ class WorkoutServiceTest {
                 () -> workoutService.getWorkoutById(workoutId, unauthorizedEmail)
         );
 
-        verify(catalogClient, never()).getExercisesByIds(any());
+        verify(catalogClient, never()).getExercisesByIds(any(), any());
     }
 
     @Test
@@ -193,7 +193,7 @@ class WorkoutServiceTest {
         when(workoutRepository.findAllWorkoutsByUserEmail(userEmail, pageable)).thenReturn(entityPage);
         when(workoutMapper.toRecord(entity, userEmail)).thenReturn(responseDto);
 
-        Page<WorkoutResponse> result = workoutService.getAllWorkoutsByUserEmail(userEmail, pageable);
+        Page<WorkoutResponse> result = workoutService.getAllAccessibleWorkouts(userEmail, "", false, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());

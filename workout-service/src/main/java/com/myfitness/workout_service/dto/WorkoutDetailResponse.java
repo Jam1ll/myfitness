@@ -11,5 +11,5 @@ public record WorkoutDetailResponse(
         boolean workoutPrivate,
         String createdBy,
         LocalDateTime createdAt,
-        boolean isOwner) {
+        boolean workoutOwner) {
 }

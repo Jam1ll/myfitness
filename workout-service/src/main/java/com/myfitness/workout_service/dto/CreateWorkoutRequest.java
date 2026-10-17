@@ -2,6 +2,7 @@ package com.myfitness.workout_service.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -14,8 +15,9 @@ public record CreateWorkoutRequest(
         @Size(min = 3, max = 100, message = "Exercise's name must have between 3 and 100 characters")
         String name,
 
-        @NotEmpty(message = "There should be at least 1 valid exercise")
+        @NotNull(message = "Exercise list cannot be null")
         List<UUID> exerciseIds,
 
-        boolean workoutPrivate) {
+        @NotNull(message = "Privacy flag cannot be null")
+        Boolean workoutPrivate) {
 }

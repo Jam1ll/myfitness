@@ -19,13 +19,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/workouts")
 @RequiredArgsConstructor
 @Tag(name = "Workouts", description = "Endpoints for creating, retrieving, updating, and deleting user workout routines")
 public class WorkoutController {
-
     private final WorkoutService workoutService;
 
     // CREATE -> POST /api/v1/workouts
@@ -87,21 +88,22 @@ public class WorkoutController {
         return workoutService.deleteWorkout(userEmail, id);
     }
 
-    // GET BY USER'S EMAIL -> GET /api/v1/workouts
+    // GET ALL -> GET /api/v1/workouts
     @Operation(
-            summary = "Get all workouts for the authenticated user (Paginated)",
-            description = "Retrieves a paginated summary list of all workout routines belonging to the authenticated user's email."
+            summary = "Get all accessible workouts (Paginated)",
+            description = "Retrieves a paginated list of all workout routines available, with optional search and filtering."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Paginated list of workouts retrieved successfully")
     })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<WorkoutResponse> getAllWorkoutsByUserEmail(
-            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
+    public Page<WorkoutResponse> getAllWorkouts(
             @RequestHeader("X-User-Email") String userEmail,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "false") boolean mineOnly,
             @ParameterObject Pageable pageable) {
-        return workoutService.getAllWorkoutsByUserEmail(userEmail, pageable);
+        return workoutService.getAllAccessibleWorkouts(userEmail, search, mineOnly, pageable);
     }
 
     // GET BY ID (DETAILED VIEW) -> GET /api/v1/workouts/{id}

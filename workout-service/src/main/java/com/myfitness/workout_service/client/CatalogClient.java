@@ -2,10 +2,7 @@ package com.myfitness.workout_service.client;
 
 import com.myfitness.workout_service.dto.ExerciseSummaryDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +15,7 @@ public interface CatalogClient {
     ExerciseSummaryDto getExerciseById(@PathVariable("id") UUID id);
 
     @PostMapping("/api/v1/exercises/batch")
-    List<ExerciseSummaryDto> getExercisesByIds(@RequestBody List<UUID> exercisesIds);
+    List<ExerciseSummaryDto> getExercisesByIds(@RequestHeader("X-User-Email") String userEmail, @RequestBody List<UUID> exercisesIds);
 
     @PostMapping("/api/v1/exercises/validate")
     boolean validateExercises(@RequestBody List<UUID> exerciseIds);

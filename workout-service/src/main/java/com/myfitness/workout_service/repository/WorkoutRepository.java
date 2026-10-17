@@ -17,6 +17,12 @@ public interface WorkoutRepository extends JpaRepository<WorkoutEntity, UUID> {
 
     Page<WorkoutEntity> findAllWorkoutsByUserEmail(String email, Pageable pageable);
 
+    @Query("SELECT w FROM WorkoutEntity w WHERE (w.workoutPrivate = false OR w.userEmail = :userEmail) AND LOWER(w.name) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<WorkoutEntity> findAccessibleWorkoutsWithSearch(@Param("userEmail") String userEmail, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT w FROM WorkoutEntity w WHERE w.userEmail = :userEmail AND LOWER(w.name) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<WorkoutEntity> findUserWorkoutsWithSearch(@Param("userEmail") String userEmail, @Param("search") String search, Pageable pageable);
+
     @Modifying
     @Query("DELETE FROM WorkoutEntity w WHERE w.id = :id AND w.userEmail = :userEmail")
     int deleteWorkoutByIdAndUserEmail(@Param("userEmail") String userEmail, @Param("id") UUID id);

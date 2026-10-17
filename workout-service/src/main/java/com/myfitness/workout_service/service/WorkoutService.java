@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,10 +32,11 @@ public class WorkoutService {
     //CREATE (PROTECTED WITH CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "createWorkoutFallback")
     public WorkoutResponse createWorkout(String userEmail, String userName, CreateWorkoutRequest workoutRequest) {
-        //batching validation
-        boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
-        if (!allValid) throw new IllegalArgumentException
-                ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        if (workoutRequest.exerciseIds() != null && !workoutRequest.exerciseIds().isEmpty()) {
+            boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
+            if (!allValid) throw new IllegalArgumentException
+                    ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        }
 
         //if every exercise is valid, proceed to build and save the routine attached to the user's email
         WorkoutEntity workoutEntity = WorkoutEntity.builder()
@@ -68,10 +70,12 @@ public class WorkoutService {
         WorkoutEntity foundEntity = workoutRepository.findWorkoutByIdAndUserEmail(id, userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Workout with id '" + id + "' not found"));
 
-        //batching validation
-        boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
-        if (!allValid) throw new IllegalArgumentException
-                ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        //validation
+        if (workoutRequest.exerciseIds() != null && !workoutRequest.exerciseIds().isEmpty()) {
+            boolean allValid = catalogClient.validateExercises(workoutRequest.exerciseIds());
+            if (!allValid) throw new IllegalArgumentException
+                    ("Error: One or more provided exercise IDs do not exist in the catalog.");
+        }
 
         //update
         foundEntity.setName(workoutRequest.name());
@@ -103,30 +107,45 @@ public class WorkoutService {
         return rowsAffected > 0;
     }
 
-    //GET ALL BY USER'S EMAIL
-    public Page<WorkoutResponse> getAllWorkoutsByUserEmail(String userEmail, Pageable pageable) {
-        return workoutRepository.findAllWorkoutsByUserEmail(userEmail, pageable).map(entity -> workoutMapper.toRecord(entity, userEmail));
+    // GET ALL ACCESSIBLE (PAGINATED & SEARCHABLE)
+    public Page<WorkoutResponse> getAllAccessibleWorkouts(String userEmail, String search, boolean mineOnly, Pageable pageable) {
+        Page<WorkoutEntity> entities;
+
+        if (mineOnly) {
+            entities = workoutRepository.findUserWorkoutsWithSearch(userEmail, search, pageable);
+        } else {
+            entities = workoutRepository.findAccessibleWorkoutsWithSearch(userEmail, search, pageable);
+        }
+
+        return entities.map(entity -> workoutMapper.toRecord(entity, userEmail));
     }
 
     //GET BY ID ENRICHED (CIRCUIT BREAKER)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "getWorkoutByIdFallback")
     public WorkoutDetailResponse getWorkoutById(UUID id, String userEmail) {
-        //anti-IDOR check
-        WorkoutEntity foundEntity = workoutRepository.findWorkoutByIdAndUserEmail(id, userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Workout id id '" + id + "' not found."));
+        WorkoutEntity workout = workoutRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Workout not found."));
 
-        //get all workout's exercises
-        List<ExerciseSummaryDto> exercises = catalogClient.getExercisesByIds(foundEntity.getExerciseIds());
+        boolean isOwner = workout.getUserEmail().equals(userEmail);
+
+        if (workout.isWorkoutPrivate() && !isOwner) {
+            throw new ResourceNotFoundException("Workout not found or you don't have access.");
+        }
+
+        List<ExerciseSummaryDto> exerciseSummaries = new ArrayList<>();
+        if (workout.getExerciseIds() != null && !workout.getExerciseIds().isEmpty()) {
+            exerciseSummaries = catalogClient.getExercisesByIds(userEmail, workout.getExerciseIds());
+        }
 
         return new WorkoutDetailResponse(
-                foundEntity.getId(),
-                foundEntity.getName(),
-                exercises,
-                foundEntity.workoutPrivate(),
-                foundEntity.getCreatedBy(),
-                foundEntity.getCreatedAt(),
-                true //just true because we already checked is anti-IDOR
-            );
+                workout.getId(),
+                workout.getName(),
+                exerciseSummaries,
+                workout.isWorkoutPrivate(),
+                workout.getCreatedBy(),
+                workout.getCreatedAt(),
+                isOwner
+        );
     }
 
     //
@@ -154,7 +173,7 @@ public class WorkoutService {
                 foundEntity.getId(),
                 foundEntity.getName(),
                 fallbackExercises,
-                foundEntity.workoutPrivate(),
+                foundEntity.isWorkoutPrivate(),
                 foundEntity.getCreatedBy(),
                 foundEntity.getCreatedAt(),
                 true //just true because we already checked is anti-IDOR

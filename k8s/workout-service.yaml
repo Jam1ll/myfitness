@@ -26,6 +26,7 @@ spec:
       containers:
         - name: workout-service
           image: jamilguzman/myfitness-workout:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
