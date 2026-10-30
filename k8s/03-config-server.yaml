@@ -1,0 +1,60 @@
+#
+# Spring Cloud Config Server
+#
+
+# Internal Service for Config Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+spec:
+  selector:
+    app: config-server
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+# Deployment to serve centralized configuration from the main branch
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      containers:
+        - name: config-server
+          image: jamilguzman/myfitness-config:v1
+          ports:
+            - containerPort: 8888
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL
+              value: "main"
+          
+          # Health probes to ensure the container is ready before receiving traffic
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8888
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8888
+            initialDelaySeconds: 20
+            periodSeconds: 10

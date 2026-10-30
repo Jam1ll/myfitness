@@ -1,6 +1,6 @@
 package com.myfitness.workout_service.client;
 
-import com.myfitness.workout_service.dto.ExerciseSummaryDto;
+import com.myfitness.workout_service.dto.routine.ExerciseSummaryDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 

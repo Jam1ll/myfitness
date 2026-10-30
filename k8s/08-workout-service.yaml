@@ -1,0 +1,72 @@
+#
+# Workout Microservice
+#
+
+# Internal Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: workout-service
+spec:
+  selector:
+    app: workout-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# Deployment managing user routines and weekly programs
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workout-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workout-service
+  template:
+    metadata:
+      labels:
+        app: workout-service
+    spec:
+      containers:
+        - name: workout-service
+          image: jamilguzman/myfitness-workout:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: SPRING_CLOUD_CONFIG_LABEL
+              value: "main"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres-db:5432/myfitness_workout"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT
+              value: "http://zipkin:9411/api/v2/spans"
+          
+          # Lowered initial delay from 180 to 30 for faster readiness
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10

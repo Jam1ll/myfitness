@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Ignore Kubernetes production/local secrets
+k8s/00-app-secrets.yaml
+
 # Java / Maven build artifacts
 **/target/
 **/*.log

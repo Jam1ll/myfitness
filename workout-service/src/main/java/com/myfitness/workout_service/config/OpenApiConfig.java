@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info(
                 title = "MyFitness - Workout Microservice API",
                 version = "1.0.0",
-                description = "REST API for managing user workout routines, exercise batch validation, and resilient catalog aggregation.",
+                description = "REST API for managing user routines, exercise batch validation, and resilient catalog aggregation.",
                 contact = @Contact(
                         name = "Jamil Guzman",
                         email = "jamilguzman202@gmail.com"

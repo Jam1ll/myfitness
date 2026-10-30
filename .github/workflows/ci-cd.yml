@@ -23,7 +23,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 25 (Eclipse Temurin)
+      - name: Set up JDK 21 (Eclipse Temurin)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -49,3 +49,33 @@ jobs:
           JWT_SECRET_KEY: ci_test_secret_key_that_is_at_least_32_bytes_long
           GOOGLE_CLIENT_ID: ci_test_google_client_id
         run: docker compose build
+
+  docker-publish:
+    name: Publish to Docker Hub
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - catalog-service
+          - workout-service
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: jamilguzman/myfitness-${{ matrix.service }}:latest
