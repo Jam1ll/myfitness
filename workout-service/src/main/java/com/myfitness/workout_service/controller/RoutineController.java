@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/workouts")
+@RequestMapping("/api/v1/workouts/routines")
 @RequiredArgsConstructor
 @Tag(name = "Routines", description = "Endpoints for creating, retrieving, updating, and deleting user routines")
 public class RoutineController {
@@ -39,7 +39,7 @@ public class RoutineController {
             @ApiResponse(responseCode = "400", description = "Invalid request data or non-existent exercise IDs"),
             @ApiResponse(responseCode = "503", description = "Catalog service is unavailable (Circuit Breaker triggered)")
     })
-    @PostMapping("/routines")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RoutineResponse createRoutine(
             @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
@@ -60,7 +60,7 @@ public class RoutineController {
             @ApiResponse(responseCode = "404", description = "Routine routine not found"),
             @ApiResponse(responseCode = "503", description = "Catalog service is unavailable (Circuit Breaker triggered)")
     })
-    @PutMapping("/routines/{id}")
+    @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public RoutineResponse updateRoutine(
             @RequestHeader("X-User-Email") String userEmail,
@@ -79,7 +79,7 @@ public class RoutineController {
             @ApiResponse(responseCode = "204", description = "Routine deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Routine routine not found")
     })
-    @DeleteMapping("//{id}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public boolean deleteRoutine(
             @RequestHeader("X-User-Email") String userEmail,

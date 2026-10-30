@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/programs")
+@RequestMapping("/api/v1/workouts/programs")
 @RequiredArgsConstructor
 @Tag(name = "Weekly Programs", description = "Endpoints for managing user weekly workout programs")
 public class WeeklyProgramController {
