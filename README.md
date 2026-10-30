@@ -2,7 +2,7 @@
 
 A robust, production-ready backend architecture for a fitness tracking application. This project is built using a **Microservices Architecture** with **Spring Boot**, fully containerized, and orchestrated via **Kubernetes**. 
 
-The primary goal of this repository is to demonstrate a scalable, resilient, and secure backend system that goes beyond simple CRUD operations, implementing cloud-native patterns and professional infrastructure management.
+The primary goal of this repository is to demonstrate a scalable, resilient, and secure backend system that implements cloud-native patterns and professional infrastructure management.
 
 ## Architecture Overview
 
