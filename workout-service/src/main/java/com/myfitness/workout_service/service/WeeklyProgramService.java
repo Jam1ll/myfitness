@@ -64,6 +64,7 @@ public class WeeklyProgramService {
                 .orElseThrow(() -> new ResourceNotFoundException("Weekly Program with id '" + id + "' not found"));
 
         existingProgram.setName(request.name());
+        existingProgram.setWeeklyProgramActive(request.weeklyProgramActive());
 
         //clean actual program days in order to add the new ones
         existingProgram.getProgramDayEntities().clear();

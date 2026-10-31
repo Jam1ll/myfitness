@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,7 +53,8 @@ class WeeklyProgramServiceTest {
         List<ProgramDayItemDto> days = List.of(
                 new ProgramDayItemDto(routineId, DayOfWeek.MONDAY)
         );
-        CreateWeeklyProgramRequest request = new CreateWeeklyProgramRequest("PPL Program", days);
+        // Corregido: Se agregaron los 3 argumentos que exige CreateWeeklyProgramRequest
+        CreateWeeklyProgramRequest request = new CreateWeeklyProgramRequest("PPL Program", days, true);
 
         RoutineEntity routineEntity = RoutineEntity.builder()
                 .id(routineId)
@@ -64,8 +66,9 @@ class WeeklyProgramServiceTest {
         WeeklyProgramEntity savedEntity = new WeeklyProgramEntity();
         savedEntity.setId(programId);
 
+        // Corregido: Orden y tipos exactos para WeeklyProgramResponse (id, name, createdBy, createdAt, programOwner, programDays, weeklyProgramActive)
         WeeklyProgramResponse expectedResponse = new WeeklyProgramResponse(
-                programId, "PPL Program", "JohnDoe", LocalDateTime.MIN, true, List.of()
+                programId, "PPL Program", "JohnDoe", LocalDateTime.MIN, true, List.of(), true
         );
 
         when(weeklyProgramMapper.toEntity(request)).thenReturn(programEntity);
@@ -88,7 +91,7 @@ class WeeklyProgramServiceTest {
         UUID routineId = UUID.randomUUID();
 
         List<ProgramDayItemDto> days = List.of(new ProgramDayItemDto(routineId, DayOfWeek.MONDAY));
-        CreateWeeklyProgramRequest request = new CreateWeeklyProgramRequest("My Program", days);
+        CreateWeeklyProgramRequest request = new CreateWeeklyProgramRequest("My Program", days, true);
 
         RoutineEntity privateRoutineOtherUser = RoutineEntity.builder()
                 .id(routineId)
@@ -96,6 +99,7 @@ class WeeklyProgramServiceTest {
                 .routinePrivate(true)
                 .build();
 
+        // ¡Añade esta línea para que devuelva una entidad y no falle por null!
         when(weeklyProgramMapper.toEntity(request)).thenReturn(new WeeklyProgramEntity());
         when(routineRepository.findById(routineId)).thenReturn(Optional.of(privateRoutineOtherUser));
 
@@ -110,8 +114,9 @@ class WeeklyProgramServiceTest {
     void getUserWeeklyPrograms_ShouldReturnListOfResponses() {
         String userEmail = "test@gmail.com";
         WeeklyProgramEntity entity = new WeeklyProgramEntity();
+        // Corregido: Orden y tipos exactos para WeeklyProgramResponse
         WeeklyProgramResponse response = new WeeklyProgramResponse(
-                UUID.randomUUID(), "Program 1", "John", LocalDateTime.MIN, true, List.of());
+                UUID.randomUUID(), "Program 1", "John", LocalDateTime.MIN, true, List.of(), true);
 
         when(weeklyProgramRepository.findAllByUserEmail(userEmail)).thenReturn(List.of(entity));
         when(weeklyProgramMapper.toResponse(entity, userEmail)).thenReturn(response);
@@ -128,23 +133,27 @@ class WeeklyProgramServiceTest {
     void updateWeeklyProgram_WhenValid_ShouldUpdateAndReturnResponse() {
         String userEmail = "test@gmail.com";
         UUID programId = UUID.randomUUID();
-        UUID routineId = UUID.randomUUID();
+        UUID routineId =UUID.randomUUID();
 
         UpdateWeeklyProgramRequest request = new UpdateWeeklyProgramRequest(
                 "Updated Program",
-                List.of(new ProgramDayItemDto(routineId, DayOfWeek.FRIDAY))
+                List.of(new ProgramDayItemDto(routineId, DayOfWeek.FRIDAY)),
+                true
         );
 
-        WeeklyProgramEntity existingProgram = new WeeklyProgramEntity();
-        existingProgram.setId(programId);
+        WeeklyProgramEntity existingProgram = WeeklyProgramEntity.builder()
+                .id(programId)
+                .programDayEntities(new ArrayList<>())
+                .build();
 
         RoutineEntity routineEntity = RoutineEntity.builder()
                 .id(routineId)
                 .userEmail(userEmail)
                 .build();
 
+        // Corregido: Orden y tipos exactos para WeeklyProgramResponse
         WeeklyProgramResponse expectedResponse = new WeeklyProgramResponse(
-                programId, "Updated Program", "John", LocalDateTime.MIN, true, List.of());
+                programId, "Updated Program", "John", LocalDateTime.MIN, true, List.of(), true);
 
         when(weeklyProgramRepository.findByIdAndUserEmail(programId, userEmail))
                 .thenReturn(Optional.of(existingProgram));
@@ -163,7 +172,7 @@ class WeeklyProgramServiceTest {
     @Test
     @DisplayName("Should delete weekly program when ID exists and belongs to user")
     void deleteWeeklyProgram_WhenExists_ShouldDeleteEntity() {
-        UUID programId = UUID.randomUUID();
+        UUID programId =UUID.randomUUID();
         String userEmail = "test@gmail.com";
 
         WeeklyProgramEntity mockProgram = WeeklyProgramEntity.builder()
