@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RoutineController {
     private final RoutineService routineService;
 
-    // CREATE -> POST /api/v1/workouts
+    // CREATE -> POST /api/v1/workouts/routines
     @Operation(
             summary = "Create a new routine",
             description = "Validates all exercise IDs in batch against catalog-service using OpenFeign (protected by Circuit Breaker) and saves the routine."
@@ -49,7 +49,7 @@ public class RoutineController {
         return routineService.createRoutine(userEmail, userName, request);
     }
 
-    // UPDATE -> PUT /api/v1/workouts/{id}
+    // UPDATE -> PUT /api/v1/workouts/routines/{id}
     @Operation(
             summary = "Update an existing routine",
             description = "Validates the updated list of exercise IDs in batch against catalog-service (protected by Circuit Breaker) and updates the workout routine."
@@ -70,7 +70,7 @@ public class RoutineController {
         return routineService.updateRoutine(userEmail, id, request);
     }
 
-    // DELETE -> DELETE /api/v1/workouts/{id}
+    // DELETE -> DELETE /api/v1/workouts/routines/{id}
     @Operation(
             summary = "Delete a workout routine",
             description = "Permanently deletes a workout routine by its unique identifier."
@@ -88,7 +88,7 @@ public class RoutineController {
         return routineService.deleteRoutine(userEmail, id);
     }
 
-    // GET ALL -> GET /api/v1/workouts
+    // GET ALL -> GET /api/v1/workouts/routines
     @Operation(
             summary = "Get all accessible workouts (Paginated)",
             description = "Retrieves a paginated list of all workout routines available, with optional search and filtering."
@@ -106,7 +106,7 @@ public class RoutineController {
         return routineService.getAllAccessibleRoutines(userEmail, search, mineOnly, pageable);
     }
 
-    // GET BY ID (DETAILED VIEW) -> GET /api/v1/workouts/{id}
+    // GET BY ID (DETAILED VIEW) -> GET /api/v1/workouts/routines/{id}
     @Operation(
             summary = "Get enriched workout detail by ID",
             description = "Retrieves a specific workout verifying user ownership (anti-IDOR) and enriches exercise details in batch from catalog-service. Returns a degraded view if catalog-service is down."
