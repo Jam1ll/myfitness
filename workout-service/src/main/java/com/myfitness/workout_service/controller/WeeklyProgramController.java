@@ -112,6 +112,6 @@ public class WeeklyProgramController {
             @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Unique identifier (UUID) of the weekly program to retrieve", required = true)
             @PathVariable UUID id){
-        return weeklyProgramService.getActiveUserWeeklyProgram(id, userEmail);
+        return weeklyProgramService.getActiveUserWeeklyProgram(userEmail);
     }
 }

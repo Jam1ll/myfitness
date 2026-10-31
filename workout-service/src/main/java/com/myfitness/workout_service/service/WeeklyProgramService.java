@@ -12,6 +12,8 @@ import com.myfitness.workout_service.mapper.WeeklyProgramMapper;
 import com.myfitness.workout_service.repository.RoutineRepository;
 import com.myfitness.workout_service.repository.WeeklyProgramRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class WeeklyProgramService {
     private final WeeklyProgramMapper weeklyProgramMapper;
 
     //CREATE
+    @CacheEvict(value = {"programsCache", "programByIdCache", "programByActiveCache"}, allEntries = true)
     @Transactional
     public WeeklyProgramResponse createWeeklyProgram(String userEmail, CreateWeeklyProgramRequest request) {
         WeeklyProgramEntity programEntity = weeklyProgramMapper.toEntity(request);
@@ -54,6 +57,7 @@ public class WeeklyProgramService {
     }
 
     //UPDATE
+    @CacheEvict(value = {"programsCache", "programByIdCache", "programByActiveCache"}, allEntries = true)
     @Transactional
     public WeeklyProgramResponse updateWeeklyProgram(String userEmail, UUID id, UpdateWeeklyProgramRequest request) {
         WeeklyProgramEntity existingProgram = weeklyProgramRepository.findByIdAndUserEmail(id, userEmail)
@@ -84,6 +88,7 @@ public class WeeklyProgramService {
     }
 
     //DELETE
+    @CacheEvict(value = {"programsCache", "programByIdCache", "programByActiveCache"}, allEntries = true)
     @Transactional
     public void deleteWeeklyProgram(String userEmail, UUID id) {
         WeeklyProgramEntity weeklyProgram = weeklyProgramRepository.findByIdAndUserEmail(id, userEmail)
@@ -92,6 +97,7 @@ public class WeeklyProgramService {
     }
 
     //GET ALL ACCESSIBLE
+    @Cacheable(value = "programsCache", key = "#userEmail")
     public List<WeeklyProgramResponse> getUserWeeklyPrograms(String userEmail) {
         List<WeeklyProgramEntity> programs = weeklyProgramRepository.findAllByUserEmail(userEmail);
         return programs.stream()
@@ -100,6 +106,7 @@ public class WeeklyProgramService {
     }
 
     //GET BY ID
+    @Cacheable(value = "programByIdCache", key = "#id")
     public WeeklyProgramResponse getWeeklyProgramById(String userEmail, UUID id) {
         WeeklyProgramEntity program = weeklyProgramRepository.findByIdAndUserEmail(id, userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Weekly Program with id '" + id + "' not found"));
@@ -107,8 +114,9 @@ public class WeeklyProgramService {
     }
 
     //GET BY ACTIVE
-    public WeeklyProgramResponse getActiveUserWeeklyProgram(UUID id, String userEmail){
-        WeeklyProgramEntity program = weeklyProgramRepository.findByIdAndUserEmailAndWeeklyProgramActiveTrue(id, userEmail)
+    @Cacheable(value = "programByActiveCache", key = "#userEmail")
+    public WeeklyProgramResponse getActiveUserWeeklyProgram(String userEmail){
+        WeeklyProgramEntity program = weeklyProgramRepository.findByUserEmailAndWeeklyProgramActiveTrue(userEmail)
                 .orElseThrow(()-> new ResourceNotFoundException("Active Weekly Program not found"));
         return weeklyProgramMapper.toResponse(program, userEmail);
     }

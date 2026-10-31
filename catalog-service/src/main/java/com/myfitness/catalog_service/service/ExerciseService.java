@@ -9,6 +9,8 @@ import com.myfitness.catalog_service.exception.ResourceNotFoundException;
 import com.myfitness.catalog_service.mapper.ExerciseMapper;
 import com.myfitness.catalog_service.repository.ExerciseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class ExerciseService {
     private final ExerciseMapper exerciseMapper;
 
     //CREATE
+    @CacheEvict(value = "exercisesCache", allEntries = true) //removes the redis cache to keep up-to-date
     public ExerciseResponse createExercise(String userEmail, String userName, CreateExerciseRequest request) {
         ExerciseEntity entity = exerciseMapper.toEntity(request);
         entity.setUserEmail(userEmail);
@@ -32,6 +35,7 @@ public class ExerciseService {
     }
 
     //UPDATE
+    @CacheEvict(value = {"exercisesCache", "exercisesByMuscleGroupCache", "exerciseByIdCache", "exerciseByNameCache"}, allEntries = true)
     public ExerciseResponse updateExercise(UUID id, UpdateExerciseRequest request) {
         ExerciseEntity foundEntity = exerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise with id '" + id + "' not found"));
@@ -45,6 +49,7 @@ public class ExerciseService {
     }
 
     //DELETE
+    @CacheEvict(value = {"exercisesCache", "exercisesByMuscleGroupCache", "exerciseByIdCache", "exerciseByNameCache"}, allEntries = true)
     @Transactional
     public boolean deleteExercise(UUID id) {
         int rowsAffected = exerciseRepository.deleteExerciseById(id);
@@ -54,7 +59,7 @@ public class ExerciseService {
     }
 
     //MASSIVE VALIDATION (Batching)
-    public boolean validateExercises(List<UUID> exerciseIds){
+    public boolean validateExercises(List<UUID> exerciseIds) {
         //clean duplicates
         List<UUID> uniqueIds = exerciseIds.stream().distinct().toList();
         //count how many of the IDs exist in the DB
@@ -64,6 +69,7 @@ public class ExerciseService {
     }
 
     //GET ALL
+    @Cacheable(value = "exercisesCache", key = "#userEmail + '_' + #search + '_' + #mineOnly + '_' + #pageable.pageNumber")
     public Page<ExerciseResponse> getAllAccessibleExercises(String userEmail, String search, boolean mineOnly, Pageable pageable) {
         Page<ExerciseEntity> entities;
 
@@ -77,11 +83,13 @@ public class ExerciseService {
     }
 
     //GET BY MUSCLE GROUP
+    @Cacheable(value = "exercisesByMuscleGroupCache", key = "#muscleGroup + '_' + pageable.pageNumber")
     public Page<ExerciseResponse> getAllExercisesByMuscleGroup(MuscleGroup muscleGroup, String userEmail, Pageable pageable) {
         return exerciseRepository.findByMuscleGroup(muscleGroup, pageable).map(entity -> exerciseMapper.toRecord(entity, userEmail));
     }
 
     //GET BY ID
+    @Cacheable(value = "exerciseByIdCache", key = "#id")
     public ExerciseResponse getExerciseById(UUID id, String userEmail) {
         return exerciseRepository.findById(id)
                 .map(entity -> exerciseMapper.toRecord(entity, userEmail))
@@ -89,6 +97,7 @@ public class ExerciseService {
     }
 
     //GET BY NAME
+    @Cacheable(value = "exerciseByNameCache", key = "#name")
     public ExerciseResponse getExerciseByName(String name, String userEmail) {
         return exerciseRepository.findByName(name)
                 .map(entity -> exerciseMapper.toRecord(entity, userEmail))
@@ -96,7 +105,7 @@ public class ExerciseService {
     }
 
     //GET ALL BY IDS (BATCHING)
-    public List<ExerciseResponse> getExercisesByIds(List<UUID> ids, String userEmail){
+    public List<ExerciseResponse> getExercisesByIds(List<UUID> ids, String userEmail) {
         return exerciseRepository.findAllById(ids)
                 .stream()
                 .map(entity -> exerciseMapper.toRecord(entity, userEmail))

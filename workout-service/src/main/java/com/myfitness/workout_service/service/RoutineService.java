@@ -11,6 +11,8 @@ import com.myfitness.workout_service.repository.RoutineRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class RoutineService {
     private final RoutineMapper routineMapper;
 
     //CREATE (PROTECTED WITH CIRCUIT BREAKER)
+    @CacheEvict(value = "routinesCache", allEntries = true)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "createRoutineFallback")
     public RoutineResponse createRoutine(String userEmail, String userName, CreateRoutineRequest routineRequest) {
         List<RoutineExerciseItemDto> items = routineRequest.routineExerciseItems();
@@ -82,6 +85,7 @@ public class RoutineService {
     }
 
     //UPDATE (PROTECTED WITH CIRCUIT BREAKER)
+    @CacheEvict(value = {"routinesCache", "routineByIdCache"}, allEntries = true)
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "updateRoutineFallback")
     @Transactional
     public RoutineResponse updateRoutine(String userEmail, UUID id, UpdateRoutineRequest routineRequest) {
@@ -133,6 +137,7 @@ public class RoutineService {
     }
 
     //DELETE
+    @CacheEvict(value = {"routinesCache", "routineByIdCache"}, allEntries = true)
     @Transactional
     public boolean deleteRoutine(String userEmail, UUID id) {
         RoutineEntity routine = routineRepository.findRoutineByIdAndUserEmail(id, userEmail)
@@ -142,6 +147,7 @@ public class RoutineService {
     }
 
     // GET ALL ACCESSIBLE (PAGINATED & SEARCHABLE)
+    @Cacheable(value = "routinesCache", key = "#userEmail + '_' + #search + '_' + #mineOnly + '_' + #pageable.pageNumber")
     public Page<RoutineResponse> getAllAccessibleRoutines(String userEmail, String search, boolean mineOnly, Pageable pageable) {
         Page<RoutineEntity> entities;
 
@@ -155,6 +161,7 @@ public class RoutineService {
     }
 
     //GET BY ID ENRICHED (CIRCUIT BREAKER)
+    @Cacheable(value = "routineByIdCache", key = "#id")
     @CircuitBreaker(name = "catalogCircuitBreaker", fallbackMethod = "getRoutineByIdFallback")
     public RoutineDetailResponse getRoutineById(UUID id, String userEmail) {
         RoutineEntity routine = routineRepository.findById(id)

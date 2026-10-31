@@ -15,5 +15,5 @@ public interface WeeklyProgramRepository extends JpaRepository<WeeklyProgramEnti
 
     Optional<WeeklyProgramEntity> findByIdAndUserEmail(UUID id, String userEmail);
 
-    Optional<WeeklyProgramEntity> findByIdAndUserEmailAndWeeklyProgramActiveTrue(UUID id, String userEmail);
+    Optional<WeeklyProgramEntity> findByUserEmailAndWeeklyProgramActiveTrue(String userEmail);
 }
