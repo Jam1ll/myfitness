@@ -105,4 +105,11 @@ public class WeeklyProgramService {
                 .orElseThrow(() -> new ResourceNotFoundException("Weekly Program with id '" + id + "' not found"));
         return weeklyProgramMapper.toResponse(program, userEmail);
     }
+
+    //GET BY ACTIVE
+    public WeeklyProgramResponse getActiveUserWeeklyProgram(UUID id, String userEmail){
+        WeeklyProgramEntity program = weeklyProgramRepository.findByIdAndUserEmailAndWeeklyProgramActiveTrue(id, userEmail)
+                .orElseThrow(()-> new ResourceNotFoundException("Active Weekly Program not found"));
+        return weeklyProgramMapper.toResponse(program, userEmail);
+    }
 }

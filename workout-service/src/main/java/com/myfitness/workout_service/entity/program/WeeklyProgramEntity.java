@@ -29,6 +29,9 @@ public class WeeklyProgramEntity {
     @Builder.Default
     private List<ProgramDayEntity> programDayEntities = new ArrayList<>();
 
+    @Column(nullable = false)
+    private boolean weeklyProgramActive;
+
     //helper
     public void addProgramDay(ProgramDayEntity programDay){
         programDayEntities.add(programDay);

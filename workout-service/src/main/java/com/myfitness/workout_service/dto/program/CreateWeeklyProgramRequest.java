@@ -3,6 +3,7 @@ package com.myfitness.workout_service.dto.program;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -14,6 +15,9 @@ public record CreateWeeklyProgramRequest(
         String name,
 
         @NotEmpty(message = "Program Day's items list can not be empty")
-        List<@Valid ProgramDayItemDto> programDays
+        List<@Valid ProgramDayItemDto> programDays,
+
+        @NotNull(message = "Weekly Program's status should be either true or false")
+        Boolean weeklyProgramActive
 ) {
 }

@@ -4,5 +4,6 @@ import java.util.List;
 
 public record UpdateWeeklyProgramRequest(
         String name,
-        List<ProgramDayItemDto> programDays) {
+        List<ProgramDayItemDto> programDays,
+        boolean weeklyProgramActive) {
 }

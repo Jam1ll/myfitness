@@ -10,6 +10,7 @@ public record WeeklyProgramResponse(
         String createdBy,
         LocalDateTime createdAt,
         boolean programOwner,
-        List<ProgramDayResponse> programDays
+        List<ProgramDayResponse> programDays,
+        boolean weeklyProgramActive
 ) {
 }

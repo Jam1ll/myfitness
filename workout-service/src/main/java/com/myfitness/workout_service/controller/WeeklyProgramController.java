@@ -42,33 +42,6 @@ public class WeeklyProgramController {
         return weeklyProgramService.createWeeklyProgram(userEmail, request);
     }
 
-    @Operation(summary = "Get all weekly programs for the user")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List of weekly programs retrieved successfully")
-    })
-    @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<WeeklyProgramResponse> getUserWeeklyPrograms(
-            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
-            @RequestHeader("X-User-Email") String userEmail) {
-        return weeklyProgramService.getUserWeeklyPrograms(userEmail);
-    }
-
-    @Operation(summary = "Get weekly program by ID")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Weekly program retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Weekly program not found")
-    })
-    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public WeeklyProgramResponse getWeeklyProgramById(
-            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
-            @RequestHeader("X-User-Email") String userEmail,
-            @Parameter(description = "Unique identifier (UUID) of the weekly program to retrieve", required = true)
-            @PathVariable UUID id) {
-        return weeklyProgramService.getWeeklyProgramById(userEmail, id);
-    }
-
     @Operation(summary = "Update an existing weekly program")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Weekly program updated successfully"),
@@ -99,5 +72,46 @@ public class WeeklyProgramController {
             @Parameter(description = "Unique identifier (UUID) of the weekly program to delete", required = true)
             @PathVariable UUID id) {
         weeklyProgramService.deleteWeeklyProgram(userEmail, id);
+    }
+
+    @Operation(summary = "Get all weekly programs for the user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of weekly programs retrieved successfully")
+    })
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<WeeklyProgramResponse> getUserWeeklyPrograms(
+            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
+            @RequestHeader("X-User-Email") String userEmail) {
+        return weeklyProgramService.getUserWeeklyPrograms(userEmail);
+    }
+
+    @Operation(summary = "Get weekly program by ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Weekly program retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Weekly program not found")
+    })
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public WeeklyProgramResponse getWeeklyProgramById(
+            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
+            @RequestHeader("X-User-Email") String userEmail,
+            @Parameter(description = "Unique identifier (UUID) of the weekly program to retrieve", required = true)
+            @PathVariable UUID id) {
+        return weeklyProgramService.getWeeklyProgramById(userEmail, id);
+    }
+
+    @Operation(summary = "Get active weekly program")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Weekly program retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Weekly program not found")
+    })
+    @GetMapping("/active")
+    public WeeklyProgramResponse getActiveUserWeeklyProgram(
+            @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
+            @RequestHeader("X-User-Email") String userEmail,
+            @Parameter(description = "Unique identifier (UUID) of the weekly program to retrieve", required = true)
+            @PathVariable UUID id){
+        return weeklyProgramService.getActiveUserWeeklyProgram(id, userEmail);
     }
 }
