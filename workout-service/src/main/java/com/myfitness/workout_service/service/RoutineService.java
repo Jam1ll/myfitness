@@ -135,10 +135,10 @@ public class RoutineService {
     //DELETE
     @Transactional
     public boolean deleteRoutine(String userEmail, UUID id) {
-        int rowsAffected = routineRepository.deleteRoutineByIdAndUserEmail(userEmail, id);
-        if (rowsAffected == 0)
-            throw new ResourceNotFoundException("Routine with id '" + id + "' not found");
-        return rowsAffected > 0;
+        RoutineEntity routine = routineRepository.findRoutineByIdAndUserEmail(id, userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Routine with id '" + id + "' not found"));
+        routineRepository.delete(routine);
+        return true;
     }
 
     // GET ALL ACCESSIBLE (PAGINATED & SEARCHABLE)

@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: jamilguzman/myfitness-gateway:v1
+          image: jamilguzman/myfitness-api-gateway:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

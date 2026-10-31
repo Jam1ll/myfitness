@@ -21,10 +21,6 @@ public interface RoutineRepository extends JpaRepository<RoutineEntity, UUID> {
     @Query("SELECT w FROM RoutineEntity w WHERE w.userEmail = :userEmail AND LOWER(w.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<RoutineEntity> findUserRoutinesWithSearch(@Param("userEmail") String userEmail, @Param("search") String search, Pageable pageable);
 
-    @Modifying
-    @Query("DELETE FROM RoutineEntity w WHERE w.id = :id AND w.userEmail = :userEmail")
-    int deleteRoutineByIdAndUserEmail(@Param("userEmail") String userEmail, @Param("id") UUID id);
-
     //anti-IDOR vulnerability check
     Optional<RoutineEntity> findRoutineByIdAndUserEmail(UUID id, String userEmail);
 }

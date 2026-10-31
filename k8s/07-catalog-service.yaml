@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: catalog-service
-          image: jamilguzman/myfitness-catalog:v1
+          image: jamilguzman/myfitness-catalog-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

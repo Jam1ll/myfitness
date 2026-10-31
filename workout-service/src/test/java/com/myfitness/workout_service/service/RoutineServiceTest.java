@@ -284,10 +284,18 @@ class RoutineServiceTest {
         UUID routineId = UUID.randomUUID();
         String userEmail = "test@gmail.com";
 
-        when(routineRepository.deleteRoutineByIdAndUserEmail(userEmail, routineId)).thenReturn(1);
+        RoutineEntity mockRoutine = RoutineEntity.builder()
+                .id(routineId)
+                .userEmail(userEmail)
+                .build();
 
-        routineService.deleteRoutine(userEmail, routineId); // Corregido
+        when(routineRepository.findRoutineByIdAndUserEmail(routineId, userEmail))
+                .thenReturn(Optional.of(mockRoutine));
 
-        verify(routineRepository, times(1)).deleteRoutineByIdAndUserEmail(userEmail, routineId);
+        boolean result = routineService.deleteRoutine(userEmail, routineId);
+
+        assertTrue(result, "Method should return True when deleted successfully");
+        verify(routineRepository, times(1)).findRoutineByIdAndUserEmail(routineId, userEmail);
+        verify(routineRepository, times(1)).delete(mockRoutine);
     }
 }

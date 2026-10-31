@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: jamilguzman/myfitness-auth:v1
+          image: jamilguzman/myfitness-auth-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
