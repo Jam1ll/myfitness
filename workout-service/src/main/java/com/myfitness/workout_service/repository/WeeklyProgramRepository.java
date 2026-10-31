@@ -17,8 +17,4 @@ public interface WeeklyProgramRepository extends JpaRepository<WeeklyProgramEnti
     List<WeeklyProgramEntity> findAllByUserEmail(String userEmail);
 
     Optional<WeeklyProgramEntity> findByIdAndUserEmail(UUID id, String userEmail);
-
-    @Modifying
-    @Query("DELETE FROM WeeklyProgramEntity wpe WHERE wpe.id = :id AND wpe.userEmail = :userEmail")
-    int deleteByIdAndUserEmail(@Param("userEmail") String userEmail, @Param("id") UUID id);
 }

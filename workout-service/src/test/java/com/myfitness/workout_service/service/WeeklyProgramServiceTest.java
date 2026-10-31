@@ -161,14 +161,22 @@ class WeeklyProgramServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw ResourceNotFoundException when program to delete is not found")
-    void deleteWeeklyProgram_WhenNotFound_ShouldThrowException() {
-        String userEmail = "test@gmail.com";
+    @DisplayName("Should delete weekly program when ID exists and belongs to user")
+    void deleteWeeklyProgram_WhenExists_ShouldDeleteEntity() {
         UUID programId = UUID.randomUUID();
+        String userEmail = "test@gmail.com";
 
-        when(weeklyProgramRepository.deleteByIdAndUserEmail(userEmail, programId)).thenReturn(0);
+        WeeklyProgramEntity mockProgram = WeeklyProgramEntity.builder()
+                .id(programId)
+                .userEmail(userEmail)
+                .build();
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> weeklyProgramService.deleteWeeklyProgram(userEmail, programId));
+        when(weeklyProgramRepository.findByIdAndUserEmail(programId, userEmail))
+                .thenReturn(Optional.of(mockProgram));
+
+        weeklyProgramService.deleteWeeklyProgram(userEmail, programId);
+
+        verify(weeklyProgramRepository, times(1)).findByIdAndUserEmail(programId, userEmail);
+        verify(weeklyProgramRepository, times(1)).delete(mockProgram);
     }
 }

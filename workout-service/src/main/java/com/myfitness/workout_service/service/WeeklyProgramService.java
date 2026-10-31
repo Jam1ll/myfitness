@@ -86,10 +86,9 @@ public class WeeklyProgramService {
     //DELETE
     @Transactional
     public void deleteWeeklyProgram(String userEmail, UUID id) {
-        int rowsAffected = weeklyProgramRepository.deleteByIdAndUserEmail(userEmail, id);
-        if (rowsAffected == 0) {
-            throw new ResourceNotFoundException("Weekly Program with id '" + id + "' not found");
-        }
+        WeeklyProgramEntity weeklyProgram = weeklyProgramRepository.findByIdAndUserEmail(id, userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Weekly Program with id '" + id + "' not found"));
+        weeklyProgramRepository.delete(weeklyProgram);
     }
 
     //GET ALL ACCESSIBLE
