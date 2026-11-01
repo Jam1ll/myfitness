@@ -1,5 +1,6 @@
 package com.myfitness.workout_service.dto.routine;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 public record RoutineExerciseItemDto(
@@ -7,5 +8,5 @@ public record RoutineExerciseItemDto(
         Integer targetSets,
         Integer targetReps,
         Integer restTimeSeconds,
-        Integer orderIndex) {
+        Integer orderIndex) implements Serializable {
 }

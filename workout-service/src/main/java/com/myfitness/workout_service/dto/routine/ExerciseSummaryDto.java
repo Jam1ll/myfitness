@@ -1,5 +1,6 @@
 package com.myfitness.workout_service.dto.routine;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,5 +11,5 @@ public record ExerciseSummaryDto(
         String muscleGroup,
         boolean routinePrivate,
         String createdBy,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt) implements Serializable {
 }

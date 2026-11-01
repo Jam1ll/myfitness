@@ -1,5 +1,6 @@
 package com.myfitness.workout_service.dto.routine;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 public record EnrichedRoutineExerciseDto(
@@ -10,5 +11,5 @@ public record EnrichedRoutineExerciseDto(
         Integer targetSets,
         Integer targetReps,
         Integer restTimeSeconds,
-        Integer orderIndex) {
+        Integer orderIndex) implements Serializable {
 }
