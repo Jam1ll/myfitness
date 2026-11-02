@@ -2,12 +2,15 @@ package com.myfitness.workout_service.entity.program;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "weekly_programs")
+@Table(name = "weekly_programs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_email", "name"})
+})
 @Getter
 @Setter
 @Builder
@@ -33,7 +36,7 @@ public class WeeklyProgramEntity {
     private boolean weeklyProgramActive;
 
     //helper
-    public void addProgramDay(ProgramDayEntity programDay){
+    public void addProgramDay(ProgramDayEntity programDay) {
         programDayEntities.add(programDay);
         programDay.setWeeklyProgramEntity(this);
     }

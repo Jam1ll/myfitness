@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "routines")
+@Table(name = "routines", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_email", "name"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
