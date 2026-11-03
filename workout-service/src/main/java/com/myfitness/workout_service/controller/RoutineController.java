@@ -42,6 +42,7 @@ public class RoutineController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RoutineResponse createRoutine(
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
             @RequestHeader("X-User-Email") String userEmail,
             @RequestHeader("X-User-Name") String userName,

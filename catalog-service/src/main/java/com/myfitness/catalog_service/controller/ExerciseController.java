@@ -40,7 +40,8 @@ public class ExerciseController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ExerciseResponse createExercise(@RequestHeader("X-User-Email") String userEmail,
+    public ExerciseResponse createExercise(@RequestHeader("Idempotency-Key") String idempotencyKey,
+                                           @RequestHeader("X-User-Email") String userEmail,
                                            @RequestHeader("X-User-Name") String userName,
                                            @Valid @RequestBody CreateExerciseRequest request) {
         return exerciseService.createExercise(userEmail,userName, request);

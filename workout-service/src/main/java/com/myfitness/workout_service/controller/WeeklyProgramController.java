@@ -36,6 +36,7 @@ public class WeeklyProgramController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public WeeklyProgramResponse createWeeklyProgram(
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
             @RequestHeader("X-User-Email") String userEmail,
             @Valid @RequestBody CreateWeeklyProgramRequest request) {
