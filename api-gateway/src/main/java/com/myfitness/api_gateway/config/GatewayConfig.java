@@ -29,6 +29,9 @@ public class GatewayConfig {
     @Value("${services.workout-url:http://workout-service:8080}")
     private String workoutServiceUrl;
 
+    @Value("${services.session-url:http://session-service:8080}")
+    private String sessionServiceUrl;
+
     public GatewayConfig(AuthenticationFilter authFilter) {
         this.authFilter = authFilter;
     }
@@ -73,6 +76,14 @@ public class GatewayConfig {
                                 .requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()))
                         )
                         .uri(workoutServiceUrl))
+
+                .route("session-service", r -> r
+                        .path("/api/v1/sessions", "/api/v1/sessions/**")
+                        .filters(f -> f
+                                .filter(authFilter.apply(new AuthenticationFilter.Config()))
+                                .requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver()))
+                        )
+                        .uri(sessionServiceUrl))
                 .build();
     }
 

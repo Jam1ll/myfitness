@@ -27,15 +27,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(@NonNull Config config) {
         return ((exchange, chain) -> {
 
-            // 1. Verificamos si la ruta actual exige seguridad
             if (validator.isSecured.test(exchange.getRequest())) {
 
-                // 2. Si exige seguridad, verificamos que traiga el Header 'Authorization'
                 if (!exchange.getRequest().getHeaders().containsHeader(HttpHeaders.AUTHORIZATION)) {
                     throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Auth header missing");
                 }
 
-                // 3. Extraemos el Header
                 String authHeader = Objects.requireNonNull
                         (exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION)).getFirst();
 
@@ -45,7 +42,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid string format");
                 }
 
-                // 4. Intentamos validar la firma matemática del token
                 try {
                     jwtUtil.validateToken(authHeader);
 
