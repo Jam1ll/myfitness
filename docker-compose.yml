@@ -88,50 +88,95 @@ services:
       config-server:
         condition: service_started
 
-  # 7. REDIS FOR RATE-LIMITING
+# 7. SESSION SERVICE
+  session-service:
+    build: ./session-service
+    container_name: myfitness-session
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/myfitness_session
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-MyFitness_Db_2026_Secure#}
+      - MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - KAFKA_URI=kafka:9092
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      kafka:
+        condition: service_started
+        
+  # 8. REDIS FOR RATE-LIMITING
   redis:
     image: redis:7-alpine
     container_name: myfitness-redis
     ports:
       - "6379:6379"
 
-  # 8. ZIPKIN FOR DISTRIBUTED TRACING
+
+  # 9. ZIPKIN FOR DISTRIBUTED TRACING
   zipkin:
     image: openzipkin/zipkin
     container_name: myfitness-zipkin
     ports:
       - "9411:9411"
   
-  # 9. ELASTICSEARCH (logs DB)
-  elasticsearch:
-    image: elasticsearch:8.15.0
-    container_name: myfitness-elasticsearch
+  # 10. ELASTICSEARCH (logs DB)
+#  elasticsearch:
+#    image: elasticsearch:8.15.0
+#    container_name: myfitness-elasticsearch
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    ports:
+#      - "9200:9200"
+
+  # 11. LOGSTASH (logs collector and processor)
+#  logstash:
+#    image: logstash:8.15.0
+#    container_name: myfitness-logstash
+#    volumes:
+#      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+#    ports:
+#      - "5000:5000"
+#    depends_on:
+#      - elasticsearch
+
+  # 12. KIBANA (graphic interface)
+#  kibana:
+#    image: kibana:8.15.0
+#    container_name: myfitness-kibana
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      - elasticsearch
+
+# 13. KAFKA
+  kafka:
+    image: apache/kafka:latest
+    container_name: myfitness-kafka
+    ports:
+      - "9092:9092"
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
+      - KAFKA_NODE_ID=0
+      - KAFKA_PROCESS_ROLES=controller,broker
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
 
-  # 10. LOGSTASH (logs collector and processor)
-  logstash:
-    image: logstash:8.15.0
-    container_name: myfitness-logstash
-    volumes:
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+  # 14. KAFKA UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: myfitness-kafka-ui
     ports:
-      - "5000:5000"
+      - "8081:8080" # Expuesto en el 8081 localmente
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
     depends_on:
-      - elasticsearch
-
-  # 11. KIBANA (graphic interface)
-  kibana:
-    image: kibana:8.15.0
-    container_name: myfitness-kibana
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
+      - kafka
 
 volumes:
   postgres_data:

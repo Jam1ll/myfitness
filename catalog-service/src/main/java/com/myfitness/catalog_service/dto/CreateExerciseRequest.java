@@ -21,5 +21,5 @@ public record CreateExerciseRequest(
         @NotNull(message = "Exercise's muscle group can not be null")
         MuscleGroup muscleGroup,
 
-        boolean exercisePrivate) {
+        Boolean exercisePrivate) {
 }

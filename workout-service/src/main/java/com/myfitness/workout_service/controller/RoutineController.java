@@ -116,7 +116,7 @@ public class RoutineController {
             @ApiResponse(responseCode = "200", description = "Routine detail retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Routine not found or does not belong to the authenticated user")
     })
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}")
     @ResponseStatus(HttpStatus.OK)
     public RoutineDetailResponse getRoutineById(
             @Parameter(description = "Unique identifier (UUID) of the workout to retrieve", required = true)

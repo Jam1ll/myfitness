@@ -110,9 +110,7 @@ public class WeeklyProgramController {
     @GetMapping("/active")
     public WeeklyProgramResponse getActiveUserWeeklyProgram(
             @Parameter(description = "Authenticated user email injected by API Gateway", required = true)
-            @RequestHeader("X-User-Email") String userEmail,
-            @Parameter(description = "Unique identifier (UUID) of the weekly program to retrieve", required = true)
-            @PathVariable UUID id){
+            @RequestHeader("X-User-Email") String userEmail){
         return weeklyProgramService.getActiveUserWeeklyProgram(userEmail);
     }
 }

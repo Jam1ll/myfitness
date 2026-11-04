@@ -11,8 +11,8 @@ public record ExerciseResponse(
         String name,
         String description,
         MuscleGroup muscleGroup,
-        boolean exercisePrivate,
+        Boolean exercisePrivate,
         String createdBy,
         LocalDateTime createAt,
-        boolean exerciseOwner) implements Serializable {
+        Boolean exerciseOwner) implements Serializable {
 }
