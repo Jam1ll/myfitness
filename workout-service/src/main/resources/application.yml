@@ -18,4 +18,3 @@ spring:
         initial-interval: 1000
         max-interval: 10000
         multiplier: 1.5
-

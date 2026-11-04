@@ -32,6 +32,16 @@
 	</properties>
 	<dependencies>
 
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+		<!-- To serialize the event -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
 		<!-- Cache Support -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
