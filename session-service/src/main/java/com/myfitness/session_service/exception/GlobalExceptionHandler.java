@@ -1,4 +1,4 @@
-package com.myfitness.workout_service.exception;
+package com.myfitness.session_service.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

@@ -1,4 +1,4 @@
-package com.myfitness.workout_service.config;
+package com.myfitness.session_service.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
@@ -13,9 +13,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "MyFitness - Workout Microservice API",
+                title = "MyFitness - Session Microservice API",
                 version = "1.0.0",
-                description = "REST API for managing user routines, exercise batch validation, and resilient catalog aggregation.",
+                description = "REST API for managing user training sessions.",
                 contact = @Contact(
                         name = "Jamil Guzman",
                         email = "jamilguzman202@gmail.com"

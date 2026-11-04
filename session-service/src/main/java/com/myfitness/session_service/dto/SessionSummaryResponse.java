@@ -1,4 +1,12 @@
 package com.myfitness.session_service.dto;
 
-public class SessionSummaryResponse {
-}
+import java.time.Instant;
+import java.util.UUID;
+
+public record SessionSummaryResponse(
+        UUID id,
+        UUID routineId,
+        String name,
+        Instant startTime,
+        Instant endTime
+) {}

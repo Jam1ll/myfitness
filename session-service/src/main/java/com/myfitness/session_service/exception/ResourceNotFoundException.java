@@ -1,4 +1,4 @@
-package com.myfitness.workout_service.exception;
+package com.myfitness.session_service.exception;
 
 public class ResourceNotFoundException extends RuntimeException{
     public ResourceNotFoundException(String message) {

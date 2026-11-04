@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "sessions", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_email", "name"})
+        @UniqueConstraint(columnNames = {"user_email", "start_time"})
 })
 @Getter
 @Setter

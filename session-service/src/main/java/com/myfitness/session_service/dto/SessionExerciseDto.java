@@ -1,4 +1,12 @@
 package com.myfitness.session_service.dto;
 
-public class SessionExerciseItem {
+import java.util.List;
+import java.util.UUID;
+
+public record SessionExerciseDto(
+        UUID id,
+        UUID exerciseId,
+        Integer orderIndex,
+        String notes,
+        List<ExerciseSetDto> sets) {
 }

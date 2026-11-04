@@ -1,4 +1,4 @@
-package com.myfitness.workout_service.exception;
+package com.myfitness.session_service.exception;
 
 public class ServiceUnavailableException extends RuntimeException {
     public ServiceUnavailableException(String message) {

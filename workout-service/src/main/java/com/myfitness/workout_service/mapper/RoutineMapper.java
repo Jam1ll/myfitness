@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface RoutineMapper {
 
     @Mapping(target = "routineOwner", expression = "java(entity.getUserEmail().equals(userEmail))")
-    @Mapping(target = "exerciseIds", expression = "java(entity.getRoutineExerciseEntities() != null ? entity.getRoutineExerciseEntities().stream().map(com.myfitness.workout_service.entity.routine.RoutineExerciseEntity::getExerciseId).toList() : java.util.List.of())")
+    @Mapping(target = "exerciseIds",expression = "java(entity.getRoutineExerciseEntities() != null ? entity.getRoutineExerciseEntities().stream().map(com.myfitness.workout_service.entity.routine.RoutineExerciseEntity::getExerciseId).toList() : java.util.List.of())")
     RoutineResponse toRecord(RoutineEntity entity, String userEmail);
 }
