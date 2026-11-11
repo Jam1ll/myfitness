@@ -1,20 +1,24 @@
 # MyFitness Backend
 
-A robust backend architecture for a fitness tracking application. This project is built using a **Microservices Architecture** with **Spring Boot**, fully containerized, and orchestrated via **Kubernetes**. 
+A robust backend architecture for a fitness tracking application. This project is built using a **Microservices Architecture** with **Spring Boot 4.1.x**, fully containerized, and orchestrated via **Docker Compose** for local development and **Kubernetes (K8s)** for production-grade deployments.
 
-The primary goal of this repository is to demonstrate a scalable, resilient, and secure backend system that implements cloud-native patterns and professional infrastructure management.
+The primary goal of this repository is to demonstrate a scalable, resilient, secure, and highly observable backend system that implements cloud-native patterns, event-driven communication, and professional infrastructure management.
 
 ## Architecture Overview
 
-The system is composed of several independent microservices communicating synchronously via **OpenFeign**, with a single entry point managed by a Spring Cloud API Gateway. The entire infrastructure, including databases and observability tools, is orchestrated locally using Kubernetes.
+The system is composed of several independent microservices. It utilizes both synchronous communication via **OpenFeign** (fortified with **Resilience4j**) and asynchronous, event-driven communication via **Apache Kafka**.
+
+A single entry point is managed by a Spring Cloud API Gateway (built on WebFlux). The entire infrastructure is observable through centralized logging and distributed tracing.
 
 ### Tech Stack & Infrastructure
-* **Core:** Java 21, Spring Boot 4.1.1, Spring Cloud
-* **Databases:** PostgreSQL (Relational Data), Redis (Caching/Session)
-* **Orchestration & Containerization:** Docker, Kubernetes (K8s)
-* **Inter-Service Communication:** OpenFeign
-* **Observability & Tracing:** Zipkin, ELK Stack (Elasticsearch, Logstash, Kibana)
-* **Security:** JWT (JSON Web Tokens), Spring Security, Kubernetes Secrets
+
+- **Core:** Java 21, Spring Boot 4.1, Spring Cloud (2025.1.x)
+- **Databases:** PostgreSQL (Relational Data), Redis (Caching & Rate-Limiting)
+- **Message Broker:** Apache Kafka (Event-Driven Architecture)
+- **Orchestration & Containerization:** Docker, Docker Compose, Kubernetes
+- **Observability & Tracing:** Zipkin, Micrometer (Brave), ELK Stack (Elasticsearch, Logstash, Kibana)
+- **Mapping & Boilerplate:** MapStruct, Lombok
+- **Security:** JWT (JSON Web Tokens), Spring Security, Google API Client
 
 ---
 
@@ -22,68 +26,103 @@ The system is composed of several independent microservices communicating synchr
 
 To ensure production readiness and system resilience, the following cloud-native practices were implemented:
 
-* **Centralized Configuration:** Managed via `config-server` to keep environment variables and properties decoupled from the codebase.
-* **Service Resilience:** Deployed with strict **Liveness and Readiness Probes** via Spring Boot Actuator to prevent Kubernetes from routing traffic to unready or frozen pods.
-* **Resource Optimization:** Explicit CPU and Memory `requests` and `limits` in K8s Deployments to prevent Java heap memory exhaustion and ensure predictable cluster performance.
-* **Data Persistence:** Database storage relies on K8s **PersistentVolumeClaims (PVCs)**, ensuring no data is lost during pod lifecycle events or cluster restarts.
-* **Security & Secret Management:** Sensitive data (JWT secret keys, database passwords) are entirely removed from plain text files and managed natively through **Kubernetes Secrets**, injected into containers at runtime.
-* **Distributed Observability:** Every HTTP request is tagged and traced across microservices using Micrometer/Zipkin, with logs aggregated in the ELK stack for rapid debugging.
+- **Centralized Configuration:** Managed via a Git-backed `config-server` to keep environment variables decoupled from the codebase. All services use `spring-retry` to ensure successful connection to the config server upon startup.
+
+- **Event-Driven & Synchronous Microservices:**
+  - Uses **Apache Kafka** to decouple domain boundaries (e.g., `session-service` publishing workout completion events).
+  - Uses **OpenFeign** for direct service-to-service calls, wrapped with **Resilience4j** for circuit breaking and fault tolerance.
+
+- **Reactive API Gateway:** Built with Spring WebFlux, acting as the sole entry point, handling route predicates, JWT validation, and rate-limiting via Redis.
+
+- **Advanced Observability:** Every HTTP request and Kafka message is traced using Zipkin. Application logs are formatted in JSON using `logstash-logback-encoder` and forwarded via TCP to an ELK stack for centralized monitoring.
+
+- **Kubernetes-Ready:** Infrastructure is fully defined in K8s manifests (Secrets, Deployments, Services, PVCs), ensuring high availability, rolling updates, and secure secret management.
 
 ---
 
 ## Microservices Breakdown
 
-| Service | Port (Internal) | Description |
-|---------|----------------|-------------|
-| **`api-gateway`** | 8080 | The single entry point for all client requests. Handles route predicates, cross-cutting concerns, and forwards traffic to the underlying services. |
-| **`auth-service`** | - | Manages user registration, authentication, and generates JWTs for secure sessions. |
-| **`catalog-service`** | - | Manages the static catalog of available exercises, muscle groups, and equipment. |
-| **`workout-service`** | - | Handles user-specific workout routines. Communicates synchronously with the `catalog-service` via **OpenFeign** to validate exercise existence. |
-| **`config-server`** | 8888 | Serves configuration properties to all microservices upon startup. |
-
-*(Note: Internal services do not expose external NodePorts by design. External access is routed exclusively through the `api-gateway` or accessed via secure K8s `port-forward` tunnels for debugging).*
+| Service | Description |
+|---------|-------------|
+| **`api-gateway`** | (Port 8080) Reactive entry point. Handles security, routing, and Redis-backed rate-limiting. |
+| **`config-server`** | (Port 8888) Centralized configuration server fetching properties from an external Git repository. |
+| **`auth-service`** | Manages user registration, Google OAuth2 integration, and generates JWTs for secure sessions. |
+| **`catalog-service`** | Manages the static catalog of exercises, utilizing Redis for high-performance caching. |
+| **`workout-service`** | Handles user-specific workout routines. Uses OpenFeign/Resilience4j to validate data with the catalog. |
+| **`session-service`** | Manages active workout sessions (sets, reps, RPE). Publishes domain events to Kafka upon completion. |
 
 ---
 
-## How to Run Locally
+## How to Run
 
-This project is designed to run on a local Kubernetes cluster (e.g., Docker Desktop with K8s enabled or Minikube).
+You can run this project using either Docker Compose (recommended for rapid local development) or Kubernetes (recommended for staging/production simulation).
 
-**1. Apply Infrastructure & Persistent Volumes**
-```bash
-# Setup database storage
-kubectl apply -f k8s/postgres-pvc.yaml
-kubectl apply -f k8s/postgres-deployment.yaml
-```
-**2. Configure Secrets**
+### Option A: Local Development via Docker Compose
 
-Apply your local secrets to secure the database and JWT generation:
+#### 1. Configure Environment Variables
+
+Ensure you have a `.env` file in the root directory:
 
 ```bash
-kubectl create secret generic app-secrets \
-  --from-literal=SPRING_DATASOURCE_PASSWORD=your_password \
-  --from-literal=JWT_SECRET_KEY=your_secure_jwt_key
+cp .env.example .env
 ```
 
-**3. Deploy Microservices**
+Update the `.env` file with your secure values (e.g., `DB_PASSWORD`, `JWT_SECRET_KEY`, `GOOGLE_CLIENT_ID`).
 
-Deploy the configuration server, gateway, and backend services:
+#### 2. Build and Deploy
+
+Use Docker Compose to build the microservices and start the cluster in the correct dependency order (utilizing `service_healthy` checks):
 
 ```bash
-kubectl apply -f k8s/config-server.yaml
-kubectl apply -f k8s/auth-service.yaml
-kubectl apply -f k8s/catalog-service.yaml
-kubectl apply -f k8s/workout-service.yaml
-kubectl apply -f k8s/api-gateway.yaml
+docker compose up -d --build
 ```
 
-**4. Access the API**
+### Option B: Deployment via Kubernetes
 
-To bypass local NodePort/IPv6 routing complexities and establish a clean connection to the Gateway, use Kubernetes port-forwarding:
+#### 1. Apply Secrets and Base Infrastructure
+
+Apply your local secrets and stateful services (Databases, Message Brokers, Observability):
+
+```bash
+kubectl apply -f k8s/00-app-secrets.yaml
+kubectl apply -f k8s/01-postgres-db.yaml
+kubectl apply -f k8s/02-redis.yaml
+kubectl apply -f k8s/04-zipkin.yaml
+kubectl apply -f k8s/05-elk-stack.yaml
+```
+
+#### 2. Deploy Microservices
+
+Deploy the configuration server first, wait for it to be ready, then deploy the rest of the services:
+
+```bash
+kubectl apply -f k8s/03-config-server.yaml
+
+# Wait for config-server to be ready, then:
+
+kubectl apply -f k8s/06-auth-service.yaml
+kubectl apply -f k8s/07-catalog-service.yaml
+kubectl apply -f k8s/08-workout-service.yaml
+kubectl apply -f k8s/09-api-gateway.yaml
+
+# Ensure session-service and Kafka manifests are applied as well.
+```
+
+#### 3. Access the API (K8s)
+
+Use port-forwarding to access the Gateway:
 
 ```bash
 kubectl port-forward deployment/api-gateway 8080:8080
 ```
-The API is now accessible at ⁠http://localhost:8080/api/v1/...⁠
 
+---
 
+## Telemetry & Monitoring Access
+
+| Component | URL | Description |
+|-----------|-----|-------------|
+| **API Gateway** | `http://localhost:8080/api/v1/...` | Main API entry point. |
+| **Zipkin** | `http://localhost:9411` | Distributed tracing and request visualization. |
+| **Kibana** | `http://localhost:5601` | Centralized log aggregation and analysis. |
+| **Kafka UI** | `http://localhost:8081` | Message broker inspection and monitoring. |
