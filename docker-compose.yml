@@ -18,7 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. CONFIG SERVER
+# 2. CONFIG SERVER
   config-server:
     build: ./config-server
     container_name: myfitness-config
@@ -104,14 +104,19 @@ services:
       config-server:
         condition: service_started
       kafka:
-        condition: service_started
+        condition: service_healthy
         
-  # 8. REDIS FOR RATE-LIMITING
+ # 8. REDIS FOR RATE-LIMITING
   redis:
     image: redis:7-alpine
     container_name: myfitness-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
   # 9. ZIPKIN FOR DISTRIBUTED TRACING
@@ -165,6 +170,11 @@ services:
       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 14. KAFKA UI
   kafka-ui:

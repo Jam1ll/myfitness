@@ -16,6 +16,6 @@ import java.util.UUID;
 public interface SessionRepository extends JpaRepository<SessionEntity, UUID> {
     Optional<SessionEntity> findSessionByIdAndUserEmail(UUID id, String userEmail);
 
-    @Query("SELECT s FROM SessionEntity WHERE s.userEmail = :userEmail")
+    @Query("SELECT s FROM SessionEntity s WHERE s.userEmail = :userEmail")
     Page<SessionEntity> findUserSessions(@Param("userEmail") String userEmail, Pageable pageable);
 }
